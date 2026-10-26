@@ -16,7 +16,8 @@ Page({
     cells: [],
     stats: { fullCount: 0, bestStreak: 0 },
     hearts: 0,
-    logs: []
+    logs: [],
+    error: ''
   },
 
   onLoad: function () {
@@ -39,7 +40,7 @@ Page({
 
     return api.call('history', { month: month }).then(function (res) {
       if (!res || !res.ok) {
-        wx.showToast({ title: (res && res.message) || '加载失败', icon: 'none' })
+        self.setData({ error: (res && res.message) || '加载失败，原因不明' })
         return
       }
 
@@ -49,6 +50,7 @@ Page({
 
       self.setData({
         ready: true,
+        error: '',
         mode: res.mode || 'mock',
         month: month,
         monthLabel: arr[0] + ' 年 ' + Number(arr[1]) + ' 月',

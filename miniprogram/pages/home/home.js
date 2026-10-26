@@ -14,7 +14,9 @@ Page({
     weekFull: 0,
     todayFull: false,
     float: '',
-    floatSub: ''
+    floatSub: '',
+    error: '',
+    errorRaw: ''
   },
 
   onLoad: function () {
@@ -44,15 +46,32 @@ Page({
     var self = this
     return api.call('home').then(function (res) {
       if (!res || !res.ok) {
-        wx.showToast({ title: (res && res.message) || '加载失败', icon: 'none' })
+        // 出错了也要说清楚原因，不能一直卡在"正在唤醒"
+        self.setData({
+          ready: false,
+          error: (res && res.message) || '加载失败，原因不明',
+          errorRaw: (res && res.raw) || ''
+        })
         return
       }
       // 用服务器时间校准本机（防止手机时间不准）
       self.offset = res.serverNow - Date.now()
-      self.setData({ home: res, ready: true, mode: res.mode || 'mock' })
+      self.setData({ home: res, ready: true, mode: res.mode || 'mock', error: '', errorRaw: '' })
       self.render()
       self.startTick()
     })
+  },
+
+  retry: function () {
+    this.setData({ ready: false, error: '', errorRaw: '' })
+    this.load()
+  },
+
+  // 云开发实在连不上时，先用本地模式把界面用起来
+  useLocal: function () {
+    api.forceLocal('用户手动切换到本地模式')
+    this.setData({ ready: false, error: '', errorRaw: '', mode: 'mock' })
+    this.load()
   },
 
   // 每秒重算一次倒计时和按钮状态

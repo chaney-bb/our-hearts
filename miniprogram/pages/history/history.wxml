@@ -7,6 +7,8 @@
 
   <view class="body">
 
+    <view class="err-banner" wx:if="{{error}}">{{error}}</view>
+
     <!-- 本月概况 -->
     <view class="stat-row">
       <view class="stat-card">

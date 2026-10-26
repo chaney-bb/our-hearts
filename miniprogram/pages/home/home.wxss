@@ -453,10 +453,66 @@
   }
 }
 
-/* ================= 加载态 ================= */
+/* ================= 加载态 / 错误态 ================= */
 .loading {
   padding-top: 200rpx;
   text-align: center;
   font-size: 26rpx;
   color: #C9B8B4;
+}
+
+.err-wrap {
+  padding: 160rpx 36rpx 0;
+}
+
+.err-card {
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 40rpx 36rpx;
+  box-shadow: 0 12rpx 40rpx rgba(255, 107, 129, 0.12);
+}
+
+.err-icon {
+  font-size: 64rpx;
+  line-height: 1;
+}
+
+.err-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  margin-top: 20rpx;
+}
+
+.err-msg {
+  margin-top: 14rpx;
+  font-size: 26rpx;
+  color: #6B5754;
+  line-height: 1.65;
+}
+
+.err-raw {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 16rpx;
+  background: #FDF3EF;
+  font-size: 21rpx;
+  color: #B08A7E;
+  word-break: break-all;
+  line-height: 1.6;
+}
+
+.err-actions {
+  display: flex;
+  margin-top: 28rpx;
+}
+
+.err-actions .btn-ghost {
+  margin-right: 18rpx;
+}
+
+.err-note {
+  margin-top: 26rpx;
+  font-size: 22rpx;
+  color: #B9A5A0;
+  line-height: 1.7;
 }

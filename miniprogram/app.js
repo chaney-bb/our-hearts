@@ -9,7 +9,12 @@ App({
   onLaunch() {
     this.measureNav()
     // 初始化数据层：填了云开发环境 ID 就走云，否则走本地预览模式
-    this.globalData.mode = api.init()
+    try {
+      this.globalData.mode = api.init()
+    } catch (err) {
+      console.error('[初始化失败]', err)
+      this.globalData.mode = 'mock'
+    }
     console.log('[数据模式]', this.globalData.mode === 'cloud' ? '云开发' : '本地预览（数据只存在本机）')
   },
 

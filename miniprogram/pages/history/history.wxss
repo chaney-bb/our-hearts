@@ -19,6 +19,17 @@
   padding: 0 32rpx;
 }
 
+.err-banner {
+  margin-bottom: 22rpx;
+  padding: 22rpx 26rpx;
+  border-radius: 22rpx;
+  background: #FFF1F3;
+  border: 2rpx solid #FFD3DA;
+  font-size: 23rpx;
+  color: #C25A6E;
+  line-height: 1.6;
+}
+
 /* 概况 */
 .stat-row {
   display: flex;

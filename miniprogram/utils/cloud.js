@@ -14,7 +14,12 @@ function call(action, data) {
       })
       .catch(function (err) {
         console.error('[云函数调用失败]', action, err)
-        reject(err)
+        // 把原始错误信息带出去，页面才能告诉你到底卡在哪一步
+        var raw = (err && (err.errMsg || err.message)) || 'wx.cloud.callFunction 失败'
+        var e = new Error(raw)
+        e.raw = raw
+        e.errCode = err && err.errCode
+        reject(e)
       })
   })
 }

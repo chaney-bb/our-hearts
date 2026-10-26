@@ -10,8 +10,8 @@
  *        两台手机的数据不会互通（也就没法真的和对象配对）。
  */
 module.exports = {
-  envId: '',
+  envId: 'cloud1-d6gfey5n985119239',
 
   // 小程序名字（暂未用到，先放着）
-  appName: '我们的小心动'
+  appName: '陈陈和小肚肚的小窝'
 }

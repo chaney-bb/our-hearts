@@ -1,6 +1,21 @@
 <view class="page">
 
-  <view class="loading" wx:if="{{!ready}}">正在唤醒我们的爱心…</view>
+  <view class="loading" wx:if="{{!ready && !error}}">正在唤醒我们的爱心…</view>
+
+  <!-- 云开发没接通时，把原因摊开说，别让人对着白屏猜 -->
+  <view class="err-wrap" wx:if="{{error}}">
+    <view class="err-card">
+      <view class="err-icon">☁️</view>
+      <view class="err-title">云开发没连上</view>
+      <view class="err-msg">{{error}}</view>
+      <view class="err-raw" wx:if="{{errorRaw}}">技术信息：{{errorRaw}}</view>
+      <view class="err-actions">
+        <view class="btn-ghost" bindtap="retry">重试</view>
+        <view class="btn-ghost primary" bindtap="useLocal">先用本地模式</view>
+      </view>
+      <view class="err-note">两分钟自查：① 云开发控制台里有没有 profiles / couples / checkins / heart_logs 四个集合 ② cloudfunctions/api 有没有右键「上传并部署」</view>
+    </view>
+  </view>
 
   <block wx:if="{{ready}}">
 
