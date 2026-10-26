@@ -16,7 +16,8 @@ Page({
     float: '',
     floatSub: '',
     error: '',
-    errorRaw: ''
+    errorRaw: '',
+    rulesStale: ''
   },
 
   onLoad: function () {
@@ -56,7 +57,36 @@ Page({
       }
       // 用服务器时间校准本机（防止手机时间不准）
       self.offset = res.serverNow - Date.now()
-      self.setData({ home: res, ready: true, mode: res.mode || 'mock', error: '', errorRaw: '' })
+
+      // 比对云端规则和本地规则：不一致说明云函数还是旧代码，没重新部署
+      var stale = ''
+      var sr = res.rules
+      if (sr && sr.windows && sr.windows.sleep && sr.windows.wake) {
+        var mine = { windows: rules.RULES.windows, hearts: rules.RULES.hearts }
+        if (JSON.stringify(sr) !== JSON.stringify(mine)) {
+          var winDiff = JSON.stringify(sr.windows) !== JSON.stringify(mine.windows)
+          if (winDiff) {
+            stale =
+              '云端还在跑旧规则（早睡 ' + sr.windows.sleep.start + ' 开始、早起 ' + sr.windows.wake.start +
+              ' 开始），你本地已经改成 ' + mine.windows.sleep.start + ' / ' + mine.windows.wake.start +
+              '。双击项目根目录的「同步规则.bat」，再右键 cloudfunctions/api 上传并部署才会生效'
+          } else {
+            stale =
+              '云端的爱心分值和本地不一致（云端：早睡 +' + sr.hearts.sleep + ' 全勤 +' + sr.hearts.fullDay +
+              '，本地：早睡 +' + mine.hearts.sleep + ' 全勤 +' + mine.hearts.fullDay +
+              '）。双击「同步规则.bat」，再重新部署云函数'
+          }
+        }
+      }
+
+      self.setData({
+        home: res,
+        ready: true,
+        mode: res.mode || 'mock',
+        error: '',
+        errorRaw: '',
+        rulesStale: stale
+      })
       self.render()
       self.startTick()
     })

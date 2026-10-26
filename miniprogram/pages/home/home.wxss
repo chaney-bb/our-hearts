@@ -129,6 +129,30 @@
   padding: 32rpx 8rpx 20rpx;
 }
 
+.stale-banner {
+  display: block;
+  margin: 22rpx 0 4rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 24rpx;
+  background: #FFF6E8;
+  border: 2rpx solid #FFE0B2;
+}
+
+.stale-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #C9821B;
+  margin-bottom: 8rpx;
+}
+
+.stale-text {
+  display: block;
+  font-size: 22rpx;
+  color: #96754A;
+  line-height: 1.65;
+}
+
 .section-title {
   font-size: 30rpx;
   font-weight: 600;

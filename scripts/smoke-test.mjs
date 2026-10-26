@@ -1,8 +1,12 @@
 /**
- * 冒烟测试：验证打卡规则和本地模式的整套流程
+ * 冒烟测试：验证打卡引擎的正确性 + 检查你当前的规则配置
  *
- * 用法：node scripts/smoke-test.mjs
- * 什么时候跑：每次改完 utils/rules.js 都跑一下，几秒钟，能挡住大部分低级错误。
+ * 用法：node scripts/smoke-test.mjs（或者双击项目根目录的「同步规则.bat」）
+ *
+ * 设计要点：
+ *   1~4 段用一套【固定的测试规则】跑断言，不受你在 rules.js 里怎么调影响。
+ *   否则你改一次窗口，测试就红一次，最后大家都学会无视红字。
+ *   第 5 段反过来，专门检查你当前的真实配置有没有写错。
  */
 import { createRequire } from 'node:module'
 
@@ -28,7 +32,7 @@ function ok(name, condition, extra) {
     console.log('  ✅ ' + name)
   } else {
     failed++
-    console.log('  ❌ ' + name + (extra ? '  ->  ' + JSON.stringify(extra) : ''))
+    console.log('  ❌ ' + name + (extra !== undefined ? '  ->  ' + JSON.stringify(extra) : ''))
   }
 }
 
@@ -42,7 +46,22 @@ function setNow(ts) {
   }
 }
 
-console.log('\n[1] 时间窗口判定')
+// ============ 用固定的测试规则，和你的配置解耦 ============
+const REAL_RULES = JSON.parse(JSON.stringify(rules.RULES))
+const TEST_WINDOWS = {
+  sleep: { start: '21:30', end: '23:59', label: '早睡', emoji: '🌙', tip: '' },
+  wake: { start: '05:30', end: '08:00', label: '早起', emoji: '☀️', tip: '' }
+}
+
+function useWindows(windows) {
+  Object.keys(windows).forEach(function (k) {
+    rules.RULES.windows[k] = Object.assign({}, windows[k])
+  })
+}
+
+useWindows(TEST_WINDOWS)
+
+console.log('\n[1] 时间窗口判定（测试规则：早睡 21:30–23:59，早起 05:30–08:00）')
 setNow(bj(2026, 10, 26, 21, 0))
 ok('21:00 早睡还没开始', rules.windowState('sleep', Date.now()) === 'upcoming', rules.windowState('sleep', Date.now()))
 ok('21:00 早起已过', rules.windowState('wake', Date.now()) === 'expired')
@@ -112,9 +131,55 @@ ok('10 月记录里有 10-26 和 10-27', !!history.days['2026-10-26'] && !!histo
 ok('10 月全勤 1 天', history.stats.fullCount === 1, history.stats)
 ok('明细有 4 条奖励', history.logs.length === 4, history.logs.length)
 
+// ============ 恢复你的真实配置，开始检查它 ============
+useWindows(REAL_RULES.windows)
+setNow(Date.now())
+
+console.log('\n[5] 检查你当前的规则（miniprogram/utils/rules.js）')
+
+function toMinutes(hhmm) {
+  const parts = String(hhmm).split(':')
+  return Number(parts[0]) * 60 + Number(parts[1])
+}
+
+rules.RULES.types.forEach(function (type) {
+  const w = rules.RULES.windows[type]
+  if (!w) {
+    ok(type + ' 窗口存在', false)
+    return
+  }
+  const valid = /^\d{1,2}:\d{2}$/.test(w.start) && /^\d{1,2}:\d{2}$/.test(w.end)
+  ok(w.label + ' 时间格式是 HH:mm（例如 21:30）', valid, w)
+  if (!valid) return
+
+  const s = toMinutes(w.start)
+  const e = toMinutes(w.end)
+  ok(w.label + ' 开始时间早于结束时间（' + w.start + ' -> ' + w.end + '）', s < e, w)
+  ok(w.label + ' 窗口不是空的（至少 10 分钟）', e - s >= 10, e - s)
+})
+
+const nowState = function (type) {
+  return rules.windowState(type, Date.now())
+}
+console.log('')
+console.log('  当前生效的窗口（写完代码自动生效，云端需要重新部署）：')
+rules.RULES.types.forEach(function (type) {
+  const w = rules.RULES.windows[type]
+  const state = nowState(type)
+  const stateText =
+    state === 'open' ? '现在可以打卡' : state === 'upcoming' ? '还没开始' : '今天已过'
+  console.log(
+    '    ' + w.emoji + ' ' + w.label + '  ' + w.start + ' – ' + w.end + '   现在 → ' + stateText
+  )
+})
+console.log('')
+console.log('  分值：早睡 +' + rules.RULES.hearts.sleep + '  早起 +' + rules.RULES.hearts.wake +
+  '  全勤 +' + rules.RULES.hearts.fullDay + '  同步 +' + rules.RULES.hearts.sync +
+  '  连续7天 +' + rules.RULES.hearts.streak7 + '  连续30天 +' + rules.RULES.hearts.streak30)
+
 console.log('')
 if (failed) {
-  console.log('❌ 有 ' + failed + ' 个断言失败')
+  console.log('❌ 有 ' + failed + ' 个断言失败，看上面标 ❌ 的行')
   process.exit(1)
 }
 console.log('🎉 全部通过')

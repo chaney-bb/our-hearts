@@ -171,7 +171,9 @@ async function buildHome(openid) {
       records: records,
       fullDay: !!(records.sleep && records.wake)
     },
-    recent: recent
+    recent: recent,
+    // 把云端正在用的规则带回去，客户端一比对就知道云函数有没有重新部署
+    rules: { windows: rules.RULES.windows, hearts: rules.RULES.hearts }
   }
 }
 
@@ -186,10 +188,18 @@ async function doCheckin(openid, type) {
   // 关键：用服务器时间判断，不用客户端时间
   const state = rules.windowState(type, now)
   if (state === 'upcoming') {
-    return { ok: false, code: 'NOT_YET', message: w.start + ' 才开始打卡哦' }
+    return {
+      ok: false,
+      code: 'NOT_YET',
+      message: w.label + '打卡 ' + w.start + ' 才开始（云端现在 ' + rules.timeKey(now) + '）'
+    }
   }
   if (state === 'expired') {
-    return { ok: false, code: 'CLOSED', message: '今天已经过了打卡时间' }
+    return {
+      ok: false,
+      code: 'CLOSED',
+      message: '今天已经过了' + w.label + '打卡时间（窗口 ' + w.start + '–' + w.end + '）'
+    }
   }
 
   const todayKey = rules.dateKey(now)

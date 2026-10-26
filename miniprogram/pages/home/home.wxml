@@ -46,6 +46,12 @@
 
   <view class="body">
 
+    <!-- 规则改了但云函数没重新部署时，直接把话说清楚 -->
+    <view class="stale-banner" wx:if="{{rulesStale}}">
+      <text class="stale-title">⚠️ 云端还是旧规则</text>
+      <text class="stale-text">{{rulesStale}}</text>
+    </view>
+
     <!-- ============ 今天的两项打卡 ============ -->
     <view class="section-head">
       <text class="section-title">今天的打卡</text>

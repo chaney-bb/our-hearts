@@ -85,6 +85,7 @@ function buildHome(s) {
       fullDay: !!(records.sleep && records.wake)
     },
     recent: recent,
+    rules: { windows: rules.RULES.windows, hearts: rules.RULES.hearts },
     mockHint: '本地预览模式：数据只存在这台手机上'
   }
 }
@@ -96,10 +97,18 @@ function doCheckin(s, type) {
 
   var state = rules.windowState(type, ms)
   if (state === 'upcoming') {
-    return { ok: false, code: 'NOT_YET', message: w.start + ' 才开始打卡哦' }
+    return {
+      ok: false,
+      code: 'NOT_YET',
+      message: w.label + '打卡 ' + w.start + ' 才开始（现在 ' + rules.timeKey(ms) + '）'
+    }
   }
   if (state === 'expired') {
-    return { ok: false, code: 'CLOSED', message: '今天已经过了打卡时间' }
+    return {
+      ok: false,
+      code: 'CLOSED',
+      message: '今天已经过了' + w.label + '打卡时间（窗口 ' + w.start + '–' + w.end + '）'
+    }
   }
 
   var todayKey = rules.dateKey(ms)

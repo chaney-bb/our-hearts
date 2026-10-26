@@ -18,7 +18,7 @@ var TZ_OFFSET = 8 * 60 * 60 * 1000
 var RULES = {
   // 打卡时间窗口（北京时间，24 小时制，start 必须小于 end）
   windows: {
-    sleep: { start: '21:30', end: '23:59', label: '早睡', emoji: '🌙', tip: '放下手机，早点睡' },
+    sleep: { start: '5:00', end: '23:59', label: '早睡', emoji: '🌙', tip: '放下手机，早点睡' },
     wake: { start: '05:30', end: '08:00', label: '早起', emoji: '☀️', tip: '新的一天开始啦' }
   },
 
