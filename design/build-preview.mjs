@@ -6,7 +6,7 @@
  *
  * 说明：这不是小程序运行结果，而是把真实的 WXSS 转成浏览器能看的 CSS
  *      （1rpx = 0.5px @ 375px 宽），配上和 WXML 一样的结构，用来看视觉。
- *      小程序里跑起来的样子和这个 95% 一致。
+ *      三屏：首页（外壳宫格）/ 打卡页 / 我的。
  */
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -20,11 +20,10 @@ function rpx2px(css) {
   return css.replace(/(-?\d*\.?\d+)rpx/g, (_, n) => Number(n) / 2 + 'px')
 }
 
-// 给每个选择器加上作用域前缀，两个页面的样式放一起也不打架
+// 给每个选择器加上作用域前缀，多个页面的样式放一起也不打架
 function scope(css, prefix) {
   css = css.replace(/\/\*[\s\S]*?\*\//g, '')
 
-  // 先保住 @keyframes，别被拆分逻辑搞坏
   const keyframes = []
   css = css.replace(/@keyframes[\s\S]*?\{[\s\S]*?\n\}/g, (m) => {
     keyframes.push(m)
@@ -42,7 +41,7 @@ function scope(css, prefix) {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
-      .map((s) => (s === 'page' ? prefix : prefix + ' ' + s))
+      .map((s) => (s === 'page' ? prefix : s.startsWith('.') || s.startsWith('#') ? prefix + ' ' + s : prefix + ' ' + s))
       .join(', ')
     out += scoped + '{' + body + '}\n'
   }
@@ -54,10 +53,10 @@ function scope(css, prefix) {
 const base = `
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 44px 40px 40px;
+    margin: 0; padding: 44px 32px 40px;
     background: #EDE3DF;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    display: flex; align-items: stretch; justify-content: center; gap: 48px;
+    display: flex; align-items: stretch; justify-content: center; gap: 30px;
   }
   .frame {
     width: 375px; flex: 0 0 375px;
@@ -67,24 +66,30 @@ const base = `
     position: relative;
     display: flex; flex-direction: column;
   }
-  #p-home .body, #p-hist .body { flex: 1; }
   .frame-label {
-    position: absolute; top: -28px; left: 0; right: 0;
+    position: absolute; top: -26px; left: 0; right: 0;
     text-align: center; font-size: 12px; color: #A08B87; letter-spacing: 1px;
   }
+  .fakenav {
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    background: #FFFFFF; font-size: 15px; font-weight: 600; color: #3A2A28;
+    border-bottom: 1px solid #F6EAE5; flex: 0 0 44px;
+  }
   .tabbar {
-    display: flex; background: #fff; border-top: 1px solid #F6EAE5;
+    display: flex; background: #fff; border-top: 1px solid #F6EAE5; margin-top: auto;
   }
   .tab {
     flex: 1; text-align: center; padding: 10px 0 14px;
     font-size: 11px; color: #B9A5A0;
   }
   .tab.active { color: #FF6B81; font-weight: 600; }
+  #p-home .body, #p-checkin .page, #p-mine .page { flex: 1; }
+  #p-checkin .page, #p-mine .page { padding-bottom: 8px; }
 `
 
 const homeMarkup = `
 <div class="frame" id="p-home">
-  <div class="frame-label">首页 / 打卡</div>
+  <div class="frame-label">首页（外壳）</div>
 
   <div class="hero" style="padding-top:44px">
     <div class="blob blob-a"></div>
@@ -98,19 +103,77 @@ const homeMarkup = `
     </div>
     <div class="hearts-row">
       <span class="heart-ico">❤️</span>
-      <span class="heart-num">128</span>
-      <span class="heart-unit">爱心</span>
+      <span class="heart-num">86</span>
+      <span class="heart-unit">我的爱心</span>
     </div>
-    <div class="streak-row">
-      <div class="streak-chip">🔥 连续 12 天全勤</div>
-      <div class="clock">22:14</div>
+    <div class="partner-hearts">
+      <span class="ph-emoji">🐻</span>
+      <span class="ph-name">小肚肚</span>
+      <span class="ph-num">💗 102</span>
     </div>
   </div>
 
   <div class="body">
     <div class="section-head">
+      <span class="section-title">我们的小功能</span>
+      <span class="section-sub">加功能只改注册表</span>
+    </div>
+
+    <div class="grid">
+      <div class="grid-item">
+        <div class="gi-emoji pink">🌙</div>
+        <div class="gi-name">早睡早起</div>
+        <div class="gi-desc">一起睡个好觉</div>
+        <div class="gi-sub">今日 1/2 · 连续 12 天</div>
+      </div>
+      <div class="grid-item is-off">
+        <div class="gi-emoji blue">🧾</div>
+        <div class="gi-name">消费申请</div>
+        <div class="gi-desc">花之前先报备</div>
+        <div class="gi-sub">待上线</div>
+      </div>
+      <div class="grid-item is-off">
+        <div class="gi-emoji orange">🍚</div>
+        <div class="gi-name">吃饭点餐</div>
+        <div class="gi-desc">今天吃点什么</div>
+        <div class="gi-sub">待上线</div>
+      </div>
+      <div class="grid-item is-off" style="opacity:.35">
+        <div class="gi-emoji pink">＋</div>
+        <div class="gi-name">下一个功能</div>
+        <div class="gi-desc">占位</div>
+      </div>
+    </div>
+
+    <div class="mock-tip">本地预览模式：数据只存在这台手机上，不会同步。</div>
+    <div class="safe-bottom"></div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active">首页</div>
+    <div class="tab">记录</div>
+    <div class="tab">我的</div>
+  </div>
+</div>
+`
+
+const checkinMarkup = `
+<div class="frame" id="p-checkin">
+  <div class="frame-label">打卡页（点宫格进来）</div>
+  <div class="fakenav">早睡早起</div>
+
+  <div class="page">
+    <div class="stat-strip">
+      <div class="ss-main">
+        <span class="ss-num">🔥 12</span>
+        <span class="ss-label">连续全勤天数</span>
+      </div>
+      <div class="ss-time">22:14</div>
+    </div>
+
+    <div class="section-head">
       <span class="section-title">今天的打卡</span>
-      <span class="section-sub">2026-10-26</span>
+      <span class="section-sub">看日历 ›</span>
     </div>
 
     <div class="check-card is-done">
@@ -131,15 +194,6 @@ const homeMarkup = `
         <div class="card-hint">05:30 开始，还有 7 小时 16 分</div>
       </div>
       <div class="btn is-disabled">未开放</div>
-    </div>
-
-    <div class="card partner-card">
-      <div class="partner-av">🐻</div>
-      <div class="partner-main">
-        <div class="partner-name">亲爱的</div>
-        <div class="partner-sub">今天也和你一起坚持 ❤️</div>
-      </div>
-      <div class="partner-tag">已配对</div>
     </div>
 
     <div class="card week-card">
@@ -165,120 +219,78 @@ const homeMarkup = `
       <div class="rule-line"><span>✨ 当天两项都完成</span><span class="plus">+1</span></div>
       <div class="rule-line"><span>💞 两人同一天都完成同一项</span><span class="plus">+1</span></div>
       <div class="rule-line"><span>🔥 连续 7 天 / 30 天全勤</span><span class="plus">+10 / +50</span></div>
-      <div class="rule-note">时间窗口：早睡 21:30–23:59，早起 05:30–08:00（按服务器时间判定）</div>
+      <div class="rule-note">时间窗口按服务器时间判定；规则改完要同步 + 重新部署云函数</div>
     </div>
 
     <div class="safe-bottom"></div>
   </div>
-
-  <div class="tabbar"><div class="tab active">打卡</div><div class="tab">记录</div></div>
 </div>
 `
 
-const cells = (() => {
-  // 2026-10-01 是周四，周一为一周第一天 -> 前面空 3 格
-  const lead = 3
-  const out = []
-  for (let i = 0; i < lead; i++) out.push('<div class="cal-cell"></div>')
-  for (let d = 1; d <= 31; d++) {
-    const full = [1, 2, 3, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 19, 20, 21, 23, 24, 25].includes(d)
-    const sleep = full || [4, 11, 18].includes(d)
-    const wake = full || [4, 11, 18].includes(d)
-    const today = d === 26
-    out.push(
-      '<div class="cal-cell">' +
-        '<div class="cell-day ' + (today ? 'is-today' : '') + ' ' + (full ? 'is-full' : '') + '">' + d + '</div>' +
-        '<div class="cell-dots">' +
-        '<div class="dot sleep ' + (sleep ? 'on' : '') + '"></div>' +
-        '<div class="dot wake ' + (wake ? 'on' : '') + '"></div>' +
-        '</div></div>'
-    )
-  }
-  while (out.length % 7 !== 0) out.push('<div class="cal-cell"></div>')
-  return out.join('')
-})()
+const mineMarkup = `
+<div class="frame" id="p-mine">
+  <div class="frame-label">我的（用户体系收口）</div>
+  <div class="fakenav">我的</div>
 
-const historyMarkup = `
-<div class="frame" id="p-hist">
-  <div class="frame-label">记录</div>
-
-  <div class="topbar" style="padding-top:44px">
-    <div class="topbar-title">我们的记录</div>
-    <div class="topbar-sub">2026 年 10 月</div>
-  </div>
-
-  <div class="body">
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-num">21</div><div class="stat-label">本月全勤</div></div>
-      <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">最长连续</div></div>
-      <div class="stat-card"><div class="stat-num heart">128</div><div class="stat-label">爱心余额</div></div>
+  <div class="page">
+    <div class="card me-card">
+      <div class="me-av">🐰</div>
+      <div class="me-main">
+        <div class="me-name">陈陈</div>
+        <div class="me-sub">和小肚肚 在一起第 57 天</div>
+      </div>
+      <div class="edit">修改</div>
     </div>
 
-    <div class="card cal-card">
-      <div class="cal-head">
-        <div class="cal-nav">‹</div>
-        <div class="cal-title">2026 年 10 月</div>
-        <div class="cal-nav is-off">›</div>
-      </div>
-      <div class="cal-week">
-        <div class="cal-week-cell">一</div><div class="cal-week-cell">二</div><div class="cal-week-cell">三</div>
-        <div class="cal-week-cell">四</div><div class="cal-week-cell">五</div><div class="cal-week-cell">六</div>
-        <div class="cal-week-cell">日</div>
-      </div>
-      <div class="cal-grid">${cells}</div>
-      <div class="cal-legend">
-        <div class="legend-item"><div class="dot sleep on"></div><span>早睡</span></div>
-        <div class="legend-item"><div class="dot wake on"></div><span>早起</span></div>
-        <div class="legend-item"><div class="dot is-full-legend"></div><span>全勤</span></div>
-      </div>
+    <div class="card info-card">
+      <div class="info-line"><span class="info-label">姓名</span><span class="info-value">陈某某</span></div>
+      <div class="info-line"><span class="info-label">手机号</span><span class="info-value">13800138000</span></div>
+      <div class="info-line"><span class="info-label">生日</span><span class="info-value">1995-01-01</span></div>
+      <div class="info-line"><span class="info-label">性别</span><span class="info-value">男</span></div>
+      <div class="info-line"><span class="info-label">自我介绍</span><span class="info-value">一个爱睡觉的人</span></div>
     </div>
 
-    <div class="section-head">
-      <span class="section-title">爱心明细</span>
-      <span class="tip">最近的变动</span>
+    <div class="card partner-card">
+      <div class="p-av">🐻</div>
+      <div class="p-main">
+        <div class="p-name">小肚肚</div>
+        <div class="p-sub">1996-05-20 · 爱吃甜食</div>
+      </div>
+      <div class="p-tag">已配对</div>
     </div>
 
-    <div class="card log-card">
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">早睡打卡</div><div class="log-time">2026-10-26 22:07</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">今日全勤</div><div class="log-time">2026-10-26 22:07</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">同步打卡</div><div class="log-time">2026-10-26 22:07</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">早起打卡</div><div class="log-time">2026-10-26 06:42</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">连续 7 天全勤</div><div class="log-time">2026-10-20 23:02</div></div>
-        <div class="log-delta">+10</div>
-      </div>
+    <div class="actions">
+      <div class="action"><span>修改资料</span><span class="arrow">›</span></div>
+      <div class="action"><span>爱心对账</span><span class="arrow">›</span></div>
+      <div class="action danger"><span>解除绑定</span><span class="arrow">›</span></div>
     </div>
 
+    <div class="foot"><span>当前模式：云开发（两人共享）</span></div>
     <div class="safe-bottom"></div>
   </div>
 
-  <div class="tabbar"><div class="tab">打卡</div><div class="tab active">记录</div></div>
+  <div class="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab">记录</div>
+    <div class="tab active">我的</div>
+  </div>
 </div>
 `
 
-const [appCss, homeCss, histCss] = await Promise.all([
+const [appCss, homeCss, checkinCss, mineCss] = await Promise.all([
   read('miniprogram/app.wxss'),
   read('miniprogram/pages/home/home.wxss'),
-  read('miniprogram/pages/history/history.wxss')
+  read('miniprogram/pages/m/checkin/index.wxss'),
+  read('miniprogram/pages/mine/mine.wxss')
 ])
 
 const css =
   rpx2px(scope(appCss, '#p-home')) +
-  rpx2px(scope(appCss, '#p-hist')) +
+  rpx2px(scope(appCss, '#p-checkin')) +
+  rpx2px(scope(appCss, '#p-mine')) +
   rpx2px(scope(homeCss, '#p-home')) +
-  rpx2px(scope(histCss, '#p-hist'))
+  rpx2px(scope(checkinCss, '#p-checkin')) +
+  rpx2px(scope(mineCss, '#p-mine'))
 
 const html = `<!doctype html>
 <html lang="zh-CN">
@@ -289,10 +301,11 @@ const html = `<!doctype html>
 </head>
 <body>
 ${homeMarkup}
-${historyMarkup}
+${checkinMarkup}
+${mineMarkup}
 </body>
 </html>
 `
 
 await writeFile(path.join(root, 'design', 'preview.html'), html, 'utf8')
-console.log('✅ 已生成 design/preview.html')
+console.log('✅ 已生成 design/preview.html（首页 / 打卡 / 我的）')

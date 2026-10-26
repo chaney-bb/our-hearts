@@ -41,10 +41,15 @@ async function summary(ctx) {
   const records = await todayRecords(ctx)
   const fullDayKeys = await store.getFullDayKeys(ctx, ctx.dateKey, LOOKBACK_DAYS)
 
+  const done = (records.sleep ? 1 : 0) + (records.wake ? 1 : 0)
+  const streak = rules.calcStreak(fullDayKeys, ctx.dateKey)
+
   return {
-    todayDone: (records.sleep ? 1 : 0) + (records.wake ? 1 : 0),
+    todayDone: done,
     todayTotal: rules.RULES.types.length,
-    streak: rules.calcStreak(fullDayKeys, ctx.dateKey)
+    streak: streak,
+    // 外壳宫格直接显示这一行（模块自己决定怎么概括，外壳不用懂业务）
+    sub: '今日 ' + done + '/' + rules.RULES.types.length + ' · 连续 ' + streak + ' 天'
   }
 }
 

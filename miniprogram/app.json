@@ -2,6 +2,8 @@
   "pages": [
     "pages/home/home",
     "pages/history/history",
+    "pages/mine/mine",
+    "pages/m/checkin/index",
     "pages/register/register"
   ],
   "window": {
@@ -19,11 +21,15 @@
     "list": [
       {
         "pagePath": "pages/home/home",
-        "text": "打卡"
+        "text": "首页"
       },
       {
         "pagePath": "pages/history/history",
         "text": "记录"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
       }
     ]
   },

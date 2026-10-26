@@ -1,7 +1,8 @@
 <view class="page">
 
   <view class="topbar" style="padding-top:{{navTop}}px">
-    <view class="title">先互相认识一下</view>
+    <view class="back" bindtap="goBack">‹ 返回</view>
+    <view class="title">{{isEdit ? '修改资料' : '先互相认识一下'}}</view>
     <view class="sub">这些信息只有你们两个人能看到</view>
   </view>
 

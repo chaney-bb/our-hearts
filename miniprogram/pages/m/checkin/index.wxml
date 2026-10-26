@@ -1,0 +1,86 @@
+<view class="page">
+
+  <view class="loading" wx:if="{{!ready && !error}}">正在加载…</view>
+
+  <view class="err-wrap" wx:if="{{error}}">
+    <view class="err-card">
+      <view class="err-icon">☁️</view>
+      <view class="err-title">打不开打卡</view>
+      <view class="err-msg">{{error}}</view>
+      <view class="err-raw" wx:if="{{errorRaw}}">技术信息：{{errorRaw}}</view>
+      <view class="err-actions">
+        <view class="btn-ghost" bindtap="retry">重试</view>
+      </view>
+    </view>
+  </view>
+
+  <block wx:if="{{ready}}">
+
+    <!-- 连续天数 -->
+    <view class="stat-strip">
+      <view class="ss-main">
+        <text class="ss-num">🔥 {{streak}}</text>
+        <text class="ss-label">连续全勤天数</text>
+      </view>
+      <view class="ss-time">{{clock}}</view>
+    </view>
+
+    <view class="stale-banner" wx:if="{{rulesStale}}">
+      <text class="stale-title">⚠️ 云端还是旧规则</text>
+      <text class="stale-text">{{rulesStale}}</text>
+    </view>
+
+    <view class="section-head">
+      <text class="section-title">今天的打卡</text>
+      <text class="section-sub" bindtap="goHistory">看日历 ›</text>
+    </view>
+
+    <view
+      wx:for="{{items}}"
+      wx:key="key"
+      class="check-card {{item.canCheck ? 'is-open' : ''}} {{item.done ? 'is-done' : ''}}"
+      bindtap="onCheckin"
+      data-type="{{item.key}}"
+    >
+      <view class="emoji-wrap {{item.key}}">{{item.emoji}}</view>
+
+      <view class="card-main">
+        <view class="card-title">{{item.label}}</view>
+        <view class="card-meta">{{item.window}}</view>
+        <view class="card-hint {{item.state}}">{{item.hint}}</view>
+      </view>
+
+      <view class="btn {{item.done ? 'is-done' : (item.canCheck ? '' : 'is-disabled')}}">{{item.done ? '已完成' : (item.canCheck ? '打卡' : '未开放')}}</view>
+    </view>
+
+    <view class="card week-card">
+      <view class="week-head">
+        <text class="week-title">最近 7 天</text>
+        <text class="tip">满勤 {{weekFull}} 天</text>
+      </view>
+      <view class="week-dots">
+        <view class="week-dot {{item.fullDay ? 'on' : ''}}" wx:for="{{week}}" wx:key="date">
+          <view class="dot-mark">{{item.fullDay ? '❤️' : '·'}}</view>
+          <view class="dot-day">{{item.dayLabel}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="card rules-card">
+      <view class="rules-title">爱心怎么来</view>
+      <view class="rule-line"><text>🌙 早睡打卡</text><text class="plus">+1</text></view>
+      <view class="rule-line"><text>☀️ 早起打卡</text><text class="plus">+1</text></view>
+      <view class="rule-line"><text>✨ 当天两项都完成</text><text class="plus">+1</text></view>
+      <view class="rule-line"><text>💞 两人同一天都完成同一项</text><text class="plus">+1</text></view>
+      <view class="rule-line"><text>🔥 连续 7 天 / 30 天全勤</text><text class="plus">+10 / +50</text></view>
+      <view class="rule-note">时间窗口按服务器时间判定；规则改完要同步 + 重新部署云函数</view>
+    </view>
+
+    <view class="safe-bottom"></view>
+  </block>
+
+  <view class="float-heart" wx:if="{{float}}">
+    <view class="float-num">{{float}} ❤️</view>
+    <view class="float-sub" wx:if="{{floatSub}}">{{floatSub}}</view>
+  </view>
+</view>

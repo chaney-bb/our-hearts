@@ -1,0 +1,7 @@
+{
+  "usingComponents": {},
+  "navigationStyle": "default",
+  "navigationBarTitleText": "早睡早起",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}

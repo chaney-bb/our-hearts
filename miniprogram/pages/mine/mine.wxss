@@ -1,0 +1,246 @@
+.page {
+  padding: 24rpx 32rpx 0;
+  background: #FFF7F3;
+  min-height: 100vh;
+}
+
+.loading {
+  padding-top: 200rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #C9B8B4;
+}
+
+.err-banner {
+  padding: 22rpx 26rpx;
+  border-radius: 22rpx;
+  background: #FFF1F3;
+  border: 2rpx solid #FFD3DA;
+  font-size: 23rpx;
+  color: #C25A6E;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 30rpx;
+  box-shadow: 0 8rpx 26rpx rgba(255, 107, 129, 0.07);
+  margin-bottom: 22rpx;
+}
+
+/* 我 */
+.me-card {
+  display: flex;
+  align-items: center;
+  padding: 32rpx 30rpx;
+}
+
+.me-av {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: #FFF0F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+}
+
+.me-main {
+  flex: 1;
+  padding: 0 22rpx;
+}
+
+.me-name {
+  font-size: 34rpx;
+  font-weight: 700;
+}
+
+.me-sub {
+  font-size: 23rpx;
+  color: #A08B87;
+  margin-top: 6rpx;
+}
+
+.edit {
+  font-size: 24rpx;
+  color: #FF6B81;
+  background: #FFF0F3;
+  padding: 10rpx 24rpx;
+  border-radius: 999rpx;
+}
+
+/* 资料 */
+.info-card {
+  padding: 10rpx 30rpx;
+}
+
+.info-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22rpx 0;
+  border-bottom: 2rpx solid #FDF4F1;
+}
+
+.info-line:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 25rpx;
+  color: #A08B87;
+  flex: 0 0 140rpx;
+}
+
+.info-value {
+  font-size: 26rpx;
+  color: #3A2A28;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
+}
+
+/* 对方 */
+.partner-card {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 30rpx;
+}
+
+.p-av {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: #FFF3E3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+}
+
+.p-main {
+  flex: 1;
+  padding: 0 20rpx;
+  min-width: 0;
+}
+
+.p-name {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.p-sub {
+  font-size: 22rpx;
+  color: #A08B87;
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p-tag {
+  font-size: 21rpx;
+  color: #2FAE8B;
+  background: #EAF7F2;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+}
+
+/* 邀请码 */
+.invite-card {
+  padding: 30rpx;
+}
+
+.invite-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  margin-bottom: 18rpx;
+}
+
+.invite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18rpx 24rpx;
+  border-radius: 22rpx;
+  background: #FBF3F1;
+}
+
+.code {
+  font-size: 40rpx;
+  font-weight: 700;
+  letter-spacing: 8rpx;
+  color: #FF5C77;
+}
+
+.invite-note {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: #B9A5A0;
+}
+
+/* 操作 */
+.actions {
+  background: #FFFFFF;
+  border-radius: 30rpx;
+  box-shadow: 0 8rpx 26rpx rgba(255, 107, 129, 0.07);
+  padding: 6rpx 30rpx;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 0;
+  border-bottom: 2rpx solid #FDF4F1;
+  font-size: 28rpx;
+}
+
+.action:last-child {
+  border-bottom: none;
+}
+
+.action.danger text {
+  color: #E05A6E;
+}
+
+.arrow {
+  color: #D8C9C5;
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.foot {
+  margin-top: 28rpx;
+  text-align: center;
+  font-size: 21rpx;
+  color: #B9A5A0;
+}
+
+/* 未登记 */
+.gate {
+  padding: 50rpx 40rpx;
+  text-align: center;
+}
+
+.gate-emoji {
+  font-size: 80rpx;
+  line-height: 1;
+}
+
+.gate-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  margin-top: 24rpx;
+}
+
+.gate-desc {
+  font-size: 24rpx;
+  color: #A08B87;
+  margin-top: 14rpx;
+}
+
+.gate-btn {
+  margin-top: 36rpx;
+  height: 86rpx;
+}

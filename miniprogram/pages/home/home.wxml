@@ -1,8 +1,5 @@
 <view class="page">
 
-  <view class="loading" wx:if="{{!ready && !error && !needRegister}}">正在唤醒我们的爱心…</view>
-
-  <!-- 还没登记：挡在门口 -->
   <view class="gate-wrap" wx:if="{{needRegister}}">
     <view class="gate-card">
       <view class="gate-emoji">📝</view>
@@ -12,147 +9,92 @@
     </view>
   </view>
 
-  <!-- 云开发没接通时，把原因摊开说，别让人对着白屏猜 -->
+  <view class="loading" wx:if="{{!ready && !error && !needRegister}}">正在唤醒我们的小窝…</view>
+
   <view class="err-wrap" wx:if="{{error}}">
     <view class="err-card">
       <view class="err-icon">☁️</view>
-      <view class="err-title">云开发没连上</view>
+      <view class="err-title">连接没成功</view>
       <view class="err-msg">{{error}}</view>
       <view class="err-raw" wx:if="{{errorRaw}}">技术信息：{{errorRaw}}</view>
       <view class="err-actions">
         <view class="btn-ghost" bindtap="retry">重试</view>
         <view class="btn-ghost primary" bindtap="useLocal">先用本地模式</view>
       </view>
-      <view class="err-note">两分钟自查：① 云开发控制台里有没有 profiles / couples / checkins / heart_logs 四个集合 ② cloudfunctions/api 有没有右键「上传并部署」</view>
     </view>
   </view>
 
   <block wx:if="{{ready}}">
 
-  <!-- ============ 顶部渐变卡：爱心 + 连续天数 ============ -->
-  <view class="hero" style="padding-top:{{navTop}}px">
-    <view class="blob blob-a"></view>
-    <view class="blob blob-b"></view>
+    <!-- 顶部：在一起多少天 + 两个人的爱心 -->
+    <view class="hero" style="padding-top:{{navTop}}px">
+      <view class="blob blob-a"></view>
+      <view class="blob blob-b"></view>
 
-    <view class="hero-top">
-      <view class="days-chip">在一起第 {{home.daysTogether}} 天</view>
-      <view class="avatars">
-        <view class="av">{{home.me.avatarEmoji}}</view>
-        <view class="av av-2">{{home.partner ? home.partner.avatarEmoji : '💫'}}</view>
-      </view>
-    </view>
-
-    <view class="hearts-row">
-      <text class="heart-ico">❤️</text>
-      <text class="heart-num">{{home.hearts}}</text>
-      <text class="heart-unit">我的爱心</text>
-    </view>
-
-    <view class="partner-hearts" wx:if="{{home.bound}}">
-      <text class="ph-emoji">{{home.partner.avatarEmoji}}</text>
-      <text class="ph-name">{{home.partner.displayName}}</text>
-      <text class="ph-num">💗 {{home.partnerHearts}}</text>
-    </view>
-
-    <view class="streak-row">
-      <view class="streak-chip">🔥 连续 {{home.streak}} 天全勤</view>
-      <view class="clock">{{clock}}</view>
-    </view>
-  </view>
-
-  <view class="body">
-
-    <!-- 规则改了但云函数没重新部署时，直接把话说清楚 -->
-    <view class="stale-banner" wx:if="{{rulesStale}}">
-      <text class="stale-title">⚠️ 云端还是旧规则</text>
-      <text class="stale-text">{{rulesStale}}</text>
-    </view>
-
-    <!-- ============ 今天的两项打卡 ============ -->
-    <view class="section-head">
-      <text class="section-title">今天的打卡</text>
-      <text class="section-sub">{{home.today.date}}</text>
-    </view>
-
-    <view
-      wx:for="{{items}}"
-      wx:key="key"
-      class="check-card {{item.canCheck ? 'is-open' : ''}} {{item.done ? 'is-done' : ''}}"
-      bindtap="onCheckin"
-      data-type="{{item.key}}"
-    >
-      <view class="emoji-wrap {{item.key}}">{{item.emoji}}</view>
-
-      <view class="card-main">
-        <view class="card-title">{{item.label}}</view>
-        <view class="card-meta">{{item.window}}</view>
-        <view class="card-hint {{item.state}}">{{item.hint}}</view>
-      </view>
-
-      <view class="btn {{item.done ? 'is-done' : (item.canCheck ? '' : 'is-disabled')}}">{{item.done ? '已完成' : (item.canCheck ? '打卡' : '未开放')}}</view>
-    </view>
-
-    <!-- ============ 配对状态 ============ -->
-    <view class="bind-card" wx:if="{{!home.bound}}">
-      <view class="bind-title">还没和 TA 配对</view>
-      <view class="bind-desc">把邀请码发给她，她在下面「输入 TA 的邀请码」里填一下，两个人就绑上了</view>
-      <view class="code-row">
-        <text class="code">{{home.inviteCode}}</text>
-        <view class="btn-ghost" bindtap="copyCode">复制</view>
-      </view>
-      <view class="btn-ghost primary bind-join" bindtap="joinByCode">输入 TA 的邀请码</view>
-    </view>
-
-    <view class="card partner-card" wx:if="{{home.bound}}">
-      <view class="partner-av">{{home.partner.avatarEmoji}}</view>
-      <view class="partner-main">
-        <view class="partner-name">{{home.partner.displayName}}</view>
-        <view class="partner-sub">今天也和你一起坚持 ❤️</view>
-      </view>
-      <view class="partner-right">
-        <view class="partner-tag">已配对</view>
-        <view class="unbind" bindtap="onUnbind">解除绑定</view>
-      </view>
-    </view>
-
-    <!-- ============ 最近 7 天 ============ -->
-    <view class="card week-card">
-      <view class="week-head">
-        <text class="week-title">最近 7 天</text>
-        <text class="tip">满勤 {{weekFull}} 天</text>
-      </view>
-      <view class="week-dots">
-        <view class="week-dot {{item.fullDay ? 'on' : ''}}" wx:for="{{week}}" wx:key="date">
-          <view class="dot-mark">{{item.fullDay ? '❤️' : '·'}}</view>
-          <view class="dot-day">{{item.dayLabel}}</view>
+      <view class="hero-top">
+        <view class="days-chip">在一起第 {{daysTogether}} 天</view>
+        <view class="avatars">
+          <view class="av">{{me.avatarEmoji}}</view>
+          <view class="av av-2">{{partner ? partner.avatarEmoji : '💫'}}</view>
         </view>
       </view>
+
+      <view class="hearts-row">
+        <text class="heart-ico">❤️</text>
+        <text class="heart-num">{{hearts}}</text>
+        <text class="heart-unit">我的爱心</text>
+      </view>
+
+      <view class="partner-hearts" wx:if="{{bound}}">
+        <text class="ph-emoji">{{partner.avatarEmoji}}</text>
+        <text class="ph-name">{{partner.displayName}}</text>
+        <text class="ph-num">💗 {{partnerHearts}}</text>
+      </view>
+      <view class="partner-hearts" wx:else>
+        <text class="ph-name">还没配对，爱心先存着</text>
+      </view>
     </view>
 
-    <!-- ============ 规则说明 ============ -->
-    <view class="card rules-card">
-      <view class="rules-title">爱心怎么来</view>
-      <view class="rule-line"><text>🌙 早睡打卡</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>☀️ 早起打卡</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>✨ 当天两项都完成</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>💞 两人同一天都完成同一项</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>🔥 连续 7 天 / 30 天全勤</text><text class="plus">+10 / +50</text></view>
-      <view class="rule-note">时间窗口：早睡 21:30–23:59，早起 05:30–08:00（按服务器时间判定）</view>
-    </view>
+    <view class="body">
 
-    <view class="mock-tip" wx:if="{{mode === 'mock'}}">
-      本地预览模式：数据只存在这台手机上，不会同步。配置云开发后才会变成真·情侣共享。
-    </view>
+      <!-- 还没配对：邀请码卡片 -->
+      <view class="bind-card" wx:if="{{!bound}}">
+        <view class="bind-title">还没和 TA 配对</view>
+        <view class="bind-desc">把邀请码发给 TA，TA 在下面「输入 TA 的邀请码」里填一下，两个人就绑上了</view>
+        <view class="code-row">
+          <text class="code">{{inviteCode}}</text>
+          <view class="btn-ghost" bindtap="copyCode">复制</view>
+        </view>
+        <view class="btn-ghost primary bind-join" bindtap="joinByCode">输入 TA 的邀请码</view>
+      </view>
 
-    <view class="safe-bottom"></view>
-  </view>
+      <!-- 功能宫格：两列，内容来自 core/modules.js -->
+      <view class="section-head">
+        <text class="section-title">我们的小功能</text>
+        <text class="section-sub">加功能只改注册表</text>
+      </view>
+
+      <view class="grid">
+        <view
+          class="grid-item {{item.enabled ? '' : 'is-off'}}"
+          wx:for="{{grid}}"
+          wx:key="key"
+          data-item="{{item}}"
+          bindtap="openModule"
+        >
+          <view class="gi-emoji {{item.color}}">{{item.emoji}}</view>
+          <view class="gi-name">{{item.name}}</view>
+          <view class="gi-desc">{{item.desc}}</view>
+          <view class="gi-sub" wx:if="{{item.sub}}">{{item.sub}}</view>
+        </view>
+      </view>
+
+      <view class="mock-tip" wx:if="{{mode === 'mock'}}">
+        本地预览模式：数据只存在这台手机上，不会同步。配置云开发后才是真的情侣共享。
+      </view>
+
+      <view class="safe-bottom"></view>
+    </view>
 
   </block>
-
-  <!-- ============ 爱心飘动动画 ============ -->
-  <view class="float-heart" wx:if="{{float}}">
-    <view class="float-num">{{float}} ❤️</view>
-    <view class="float-sub" wx:if="{{floatSub}}">{{floatSub}}</view>
-  </view>
-
 </view>

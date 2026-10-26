@@ -6,10 +6,10 @@
 <style>
   * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 44px 40px 40px;
+    margin: 0; padding: 44px 32px 40px;
     background: #EDE3DF;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    display: flex; align-items: stretch; justify-content: center; gap: 48px;
+    display: flex; align-items: stretch; justify-content: center; gap: 30px;
   }
   .frame {
     width: 375px; flex: 0 0 375px;
@@ -19,19 +19,25 @@
     position: relative;
     display: flex; flex-direction: column;
   }
-  #p-home .body, #p-hist .body { flex: 1; }
   .frame-label {
-    position: absolute; top: -28px; left: 0; right: 0;
+    position: absolute; top: -26px; left: 0; right: 0;
     text-align: center; font-size: 12px; color: #A08B87; letter-spacing: 1px;
   }
+  .fakenav {
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    background: #FFFFFF; font-size: 15px; font-weight: 600; color: #3A2A28;
+    border-bottom: 1px solid #F6EAE5; flex: 0 0 44px;
+  }
   .tabbar {
-    display: flex; background: #fff; border-top: 1px solid #F6EAE5;
+    display: flex; background: #fff; border-top: 1px solid #F6EAE5; margin-top: auto;
   }
   .tab {
     flex: 1; text-align: center; padding: 10px 0 14px;
     font-size: 11px; color: #B9A5A0;
   }
   .tab.active { color: #FF6B81; font-weight: 600; }
+  #p-home .body, #p-checkin .page, #p-mine .page { flex: 1; }
+  #p-checkin .page, #p-mine .page { padding-bottom: 8px; }
 #p-home{
   background: #FFF7F3;
   color: #3A2A28;
@@ -100,7 +106,7 @@
 #p-home .safe-bottom{
   height: calc(12px + env(safe-area-inset-bottom));
 }
-#p-hist{
+#p-checkin{
   background: #FFF7F3;
   color: #3A2A28;
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
@@ -108,15 +114,15 @@
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
-#p-hist view, #p-hist text{
+#p-checkin view, #p-checkin text{
   box-sizing: border-box;
 }
-#p-hist .card{
+#p-checkin .card{
   background: #FFFFFF;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(255, 107, 129, 0.08);
 }
-#p-hist .btn{
+#p-checkin .btn{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -129,17 +135,17 @@
   background: linear-gradient(135deg, #FF8FA3 0%, #FF6B81 100%);
   box-shadow: 0 4px 10px rgba(255, 107, 129, 0.28);
 }
-#p-hist .btn.is-disabled{
+#p-checkin .btn.is-disabled{
   background: #F4E9E7;
   color: #B9A5A0;
   box-shadow: none;
 }
-#p-hist .btn.is-done{
+#p-checkin .btn.is-done{
   background: #EAF7F2;
   color: #2FAE8B;
   box-shadow: none;
 }
-#p-hist .btn-ghost{
+#p-checkin .btn-ghost{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -151,21 +157,89 @@
   color: #FF6B81;
   background: #FFF0F3;
 }
-#p-hist .btn-ghost.primary{
+#p-checkin .btn-ghost.primary{
   color: #FFFFFF;
   background: linear-gradient(135deg, #FF8FA3 0%, #FF6B81 100%);
 }
-#p-hist .tip{
+#p-checkin .tip{
   font-size: 12px;
   color: #A08B87;
 }
-#p-hist .empty{
+#p-checkin .empty{
   padding: 30px 20px;
   text-align: center;
   font-size: 13px;
   color: #B9A5A0;
 }
-#p-hist .safe-bottom{
+#p-checkin .safe-bottom{
+  height: calc(12px + env(safe-area-inset-bottom));
+}
+#p-mine{
+  background: #FFF7F3;
+  color: #3A2A28;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+#p-mine view, #p-mine text{
+  box-sizing: border-box;
+}
+#p-mine .card{
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(255, 107, 129, 0.08);
+}
+#p-mine .btn{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 499.5px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF8FA3 0%, #FF6B81 100%);
+  box-shadow: 0 4px 10px rgba(255, 107, 129, 0.28);
+}
+#p-mine .btn.is-disabled{
+  background: #F4E9E7;
+  color: #B9A5A0;
+  box-shadow: none;
+}
+#p-mine .btn.is-done{
+  background: #EAF7F2;
+  color: #2FAE8B;
+  box-shadow: none;
+}
+#p-mine .btn-ghost{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 499.5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF6B81;
+  background: #FFF0F3;
+}
+#p-mine .btn-ghost.primary{
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF8FA3 0%, #FF6B81 100%);
+}
+#p-mine .tip{
+  font-size: 12px;
+  color: #A08B87;
+}
+#p-mine .empty{
+  padding: 30px 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #B9A5A0;
+}
+#p-mine .safe-bottom{
   height: calc(12px + env(safe-area-inset-bottom));
 }
 #p-home .hero{
@@ -208,7 +282,6 @@
   padding: 5px 12px;
   border-radius: 499.5px;
   background: rgba(255, 255, 255, 0.22);
-  letter-spacing: 0.25px;
 }
 #p-home .avatars{
   display: flex;
@@ -250,24 +323,27 @@
   margin-left: 6px;
   opacity: 0.85;
 }
-#p-home .streak-row{
-  display: flex;
+#p-home .partner-hearts{
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 14px;
+  margin-top: 10px;
   position: relative;
   z-index: 1;
-}
-#p-home .streak-chip{
-  font-size: 12.5px;
-  padding: 5px 12px;
-  border-radius: 499.5px;
-  background: rgba(255, 255, 255, 0.2);
-}
-#p-home .clock{
   font-size: 12px;
-  opacity: 0.8;
-  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 499.5px;
+  padding: 5px 11px 5px 7px;
+}
+#p-home .ph-emoji{
+  font-size: 14px;
+  margin-right: 4px;
+}
+#p-home .ph-name{
+  margin-right: 6px;
+  opacity: 0.9;
+}
+#p-home .ph-num{
+  font-weight: 600;
 }
 #p-home .body{
   padding: 4px 16px 0;
@@ -276,87 +352,81 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 16px 4px 10px;
+  padding: 17px 4px 10px;
 }
 #p-home .section-title{
   font-size: 15px;
   font-weight: 600;
 }
 #p-home .section-sub{
-  font-size: 12px;
+  font-size: 11px;
   color: #B9A5A0;
 }
-#p-home .check-card{
+#p-home .grid{
   display: flex;
-  align-items: center;
-  padding: 15px 14px;
-  margin-bottom: 11px;
+  flex-wrap: wrap;
+}
+#p-home .grid-item{
+  width: calc(50% - 5.5px);
+  margin: 0 11px 11px 0;
+  padding: 15px 13px;
   background: #FFFFFF;
-  border-radius: 16px;
-  border: 1.5px solid transparent;
-  box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-#p-home .check-card.is-open{
-  border-color: #FFDCE2;
-  box-shadow: 0 6px 17px rgba(255, 107, 129, 0.16);
-}
-#p-home .check-card.is-done{
-  background: #FFFDFC;
-  border-color: #EAF7F2;
-}
-#p-home .check-card:active{
-  transform: scale(0.985);
-}
-#p-home .emoji-wrap{
-  width: 48px;
-  height: 48px;
   border-radius: 15px;
+  box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.15s ease;
+}
+#p-home .grid-item:nth-child(2n){
+  margin-right: 0;
+}
+#p-home .grid-item:active{
+  transform: scale(0.975);
+}
+#p-home .grid-item.is-off{
+  opacity: 0.62;
+}
+#p-home .gi-emoji{
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
+  font-size: 20px;
+  background: #FFF0F3;
+  margin-bottom: 10px;
 }
-#p-home .emoji-wrap.sleep{
-  background: #EEEBFF;
+#p-home .gi-emoji.pink{
+  background: #FFF0F3;
 }
-#p-home .emoji-wrap.wake{
-  background: #FFF3E0;
+#p-home .gi-emoji.blue{
+  background: #EDF3FF;
 }
-#p-home .card-main{
-  flex: 1;
-  min-width: 0;
-  padding: 0 12px;
+#p-home .gi-emoji.orange{
+  background: #FFF3E3;
 }
-#p-home .card-title{
-  font-size: 16px;
+#p-home .gi-name{
+  font-size: 15px;
   font-weight: 600;
-  line-height: 1.3;
 }
-#p-home .card-meta{
-  font-size: 11.5px;
+#p-home .gi-desc{
+  font-size: 11px;
   color: #A08B87;
-  margin-top: 2px;
+  margin-top: 3px;
 }
-#p-home .card-hint{
-  font-size: 11.5px;
-  margin-top: 4px;
-  color: #A08B87;
-}
-#p-home .card-hint.open{
+#p-home .gi-sub{
+  margin-top: 7px;
+  font-size: 10.5px;
   color: #FF6B81;
-  font-weight: 600;
+  font-weight: 500;
 }
-#p-home .card-hint.done{
-  color: #2FAE8B;
-}
-#p-home .card-hint.expired{
-  color: #C9B8B4;
+#p-home .grid-item.is-off .gi-sub{
+  color: #B9A5A0;
+  font-weight: 400;
 }
 #p-home .bind-card{
-  margin-top: 4px;
-  margin-bottom: 11px;
+  margin-top: 13px;
   padding: 16px;
   border-radius: 16px;
   background: linear-gradient(135deg, #FFFFFF 0%, #FFF4F6 100%);
@@ -393,67 +463,239 @@
   height: 40px;
   font-size: 14px;
 }
-#p-home .partner-card{
-  display: flex;
-  align-items: center;
-  padding: 14px;
-  margin-bottom: 11px;
+#p-home .mock-tip{
+  margin-top: 11px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #FDF3EF;
+  font-size: 11px;
+  color: #B08A7E;
+  line-height: 1.6;
 }
-#p-home .partner-av{
-  width: 44px;
+#p-home .loading{
+  padding-top: 100px;
+  text-align: center;
+  font-size: 13px;
+  color: #C9B8B4;
+}
+#p-home .err-wrap{
+  padding: 80px 18px 0;
+}
+#p-home .err-card{
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 20px 18px;
+  box-shadow: 0 6px 20px rgba(255, 107, 129, 0.12);
+}
+#p-home .err-icon{
+  font-size: 32px;
+  line-height: 1;
+}
+#p-home .err-title{
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+#p-home .err-msg{
+  margin-top: 7px;
+  font-size: 13px;
+  color: #6B5754;
+  line-height: 1.65;
+}
+#p-home .err-raw{
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #FDF3EF;
+  font-size: 10.5px;
+  color: #B08A7E;
+  word-break: break-all;
+  line-height: 1.6;
+}
+#p-home .err-actions{
+  display: flex;
+  margin-top: 14px;
+}
+#p-home .err-actions .btn-ghost{
+  margin-right: 9px;
+}
+#p-home .gate-wrap{
+  padding: 90px 22px 0;
+}
+#p-home .gate-card{
+  background: #FFFFFF;
+  border-radius: 18px;
+  padding: 28px 22px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(255, 107, 129, 0.14);
+}
+#p-home .gate-emoji{
+  font-size: 42px;
+  line-height: 1;
+}
+#p-home .gate-title{
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 14px;
+}
+#p-home .gate-desc{
+  font-size: 12.5px;
+  color: #A08B87;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+#p-home .gate-btn{
+  margin-top: 20px;
   height: 44px;
-  border-radius: 50%;
-  background: #FFF0F3;
+}
+#p-checkin .page{
+  padding: 0 16px;
+  background: #FFF7F3;
+  min-height: 100vh;
+}
+#p-checkin .stat-strip{
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
+  justify-content: space-between;
+  margin: 14px 0 4px;
+  padding: 15px 16px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #FFA1AE 0%, #FF7189 60%, #FF5C77 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 17px rgba(255, 92, 119, 0.25);
 }
-#p-home .partner-main{
-  flex: 1;
-  padding: 0 10px;
+#p-checkin .ss-main{
+  display: flex;
+  align-items: baseline;
 }
-#p-home .partner-name{
+#p-checkin .ss-num{
+  font-size: 22px;
+  font-weight: 700;
+}
+#p-checkin .ss-label{
+  margin-left: 7px;
+  font-size: 12px;
+  opacity: 0.9;
+}
+#p-checkin .ss-time{
+  font-size: 12px;
+  opacity: 0.85;
+  font-variant-numeric: tabular-nums;
+}
+#p-checkin .section-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 4px 10px;
+}
+#p-checkin .section-title{
   font-size: 15px;
   font-weight: 600;
 }
-#p-home .partner-sub{
+#p-checkin .section-sub{
+  font-size: 12px;
+  color: #B9A5A0;
+}
+#p-checkin .check-card{
+  display: flex;
+  align-items: center;
+  padding: 15px 14px;
+  margin-bottom: 11px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1.5px solid transparent;
+  box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+#p-checkin .check-card.is-open{
+  border-color: #FFDCE2;
+  box-shadow: 0 6px 17px rgba(255, 107, 129, 0.16);
+}
+#p-checkin .check-card.is-done{
+  background: #FFFDFC;
+  border-color: #EAF7F2;
+}
+#p-checkin .check-card:active{
+  transform: scale(0.985);
+}
+#p-checkin .emoji-wrap{
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+#p-checkin .emoji-wrap.sleep{
+  background: #EEEBFF;
+}
+#p-checkin .emoji-wrap.wake{
+  background: #FFF3E0;
+}
+#p-checkin .card-main{
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+}
+#p-checkin .card-title{
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+#p-checkin .card-meta{
   font-size: 11.5px;
   color: #A08B87;
   margin-top: 2px;
 }
-#p-home .partner-tag{
-  font-size: 11px;
-  color: #2FAE8B;
-  background: #EAF7F2;
-  padding: 4px 10px;
-  border-radius: 499.5px;
+#p-checkin .card-hint{
+  font-size: 11.5px;
+  margin-top: 4px;
+  color: #A08B87;
 }
-#p-home .week-card{
+#p-checkin .card-hint.open{
+  color: #FF6B81;
+  font-weight: 600;
+}
+#p-checkin .card-hint.done{
+  color: #2FAE8B;
+}
+#p-checkin .card-hint.expired{
+  color: #C9B8B4;
+}
+#p-checkin .week-card{
   padding: 14px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
   margin-bottom: 11px;
 }
-#p-home .week-head{
+#p-checkin .week-head{
   display: flex;
   align-items: baseline;
   justify-content: space-between;
 }
-#p-home .week-title{
+#p-checkin .week-title{
   font-size: 14px;
   font-weight: 600;
 }
-#p-home .week-dots{
+#p-checkin .tip{
+  font-size: 11px;
+  color: #A08B87;
+}
+#p-checkin .week-dots{
   display: flex;
   justify-content: space-between;
   margin-top: 11px;
 }
-#p-home .week-dot{
+#p-checkin .week-dot{
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
-#p-home .dot-mark{
+#p-checkin .dot-mark{
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -464,24 +706,27 @@
   justify-content: center;
   font-size: 13px;
 }
-#p-home .week-dot.on .dot-mark{
+#p-checkin .week-dot.on .dot-mark{
   background: #FFE8EC;
   font-size: 12px;
 }
-#p-home .dot-day{
+#p-checkin .dot-day{
   font-size: 10px;
   color: #B9A5A0;
   margin-top: 5px;
 }
-#p-home .rules-card{
+#p-checkin .rules-card{
   padding: 15px 16px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
 }
-#p-home .rules-title{
+#p-checkin .rules-title{
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 9px;
 }
-#p-home .rule-line{
+#p-checkin .rule-line{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -489,26 +734,81 @@
   color: #6B5754;
   padding: 5px 0;
 }
-#p-home .plus{
+#p-checkin .plus{
   font-weight: 700;
   color: #FF6B81;
 }
-#p-home .rule-note{
+#p-checkin .rule-note{
   margin-top: 8px;
   font-size: 11px;
   color: #B9A5A0;
   line-height: 1.6;
 }
-#p-home .mock-tip{
+#p-checkin .stale-banner{
+  display: block;
   margin-top: 11px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #FDF3EF;
-  font-size: 11px;
-  color: #B08A7E;
-  line-height: 1.6;
+  padding: 12px 13px;
+  border-radius: 12px;
+  background: #FFF6E8;
+  border: 1px solid #FFE0B2;
 }
-#p-home .float-heart{
+#p-checkin .stale-title{
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #C9821B;
+  margin-bottom: 4px;
+}
+#p-checkin .stale-text{
+  display: block;
+  font-size: 11px;
+  color: #96754A;
+  line-height: 1.65;
+}
+#p-checkin .loading{
+  padding-top: 100px;
+  text-align: center;
+  font-size: 13px;
+  color: #C9B8B4;
+}
+#p-checkin .err-wrap{
+  padding-top: 60px;
+}
+#p-checkin .err-card{
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 20px 18px;
+  box-shadow: 0 6px 20px rgba(255, 107, 129, 0.12);
+}
+#p-checkin .err-icon{
+  font-size: 32px;
+  line-height: 1;
+}
+#p-checkin .err-title{
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+#p-checkin .err-msg{
+  margin-top: 7px;
+  font-size: 13px;
+  color: #6B5754;
+  line-height: 1.65;
+}
+#p-checkin .err-raw{
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #FDF3EF;
+  font-size: 10.5px;
+  color: #B08A7E;
+  word-break: break-all;
+}
+#p-checkin .err-actions{
+  display: flex;
+  margin-top: 14px;
+}
+#p-checkin .float-heart{
   position: fixed;
   left: 50%;
   top: 34%;
@@ -518,13 +818,13 @@
   pointer-events: none;
   animation: floatUp 1.8s ease-out forwards;
 }
-#p-home .float-num{
+#p-checkin .float-num{
   font-size: 30px;
   font-weight: 700;
   color: #FF5C77;
   text-shadow: 0 2px 8px rgba(255, 92, 119, 0.35);
 }
-#p-home .float-sub{
+#p-checkin .float-sub{
   margin-top: 4px;
   font-size: 11px;
   color: #FF8FA3;
@@ -533,245 +833,216 @@
   border-radius: 499.5px;
   white-space: nowrap;
 }
-#p-home @keyframes floatUp {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(10px) scale(0.8);
-  }
-  25% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0) scale(1.05);
-  }
-  70% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-30px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-70px) scale(0.95);
-  }
+#p-mine .page{
+  padding: 12px 16px 0;
+  background: #FFF7F3;
+  min-height: 100vh;
 }
-
-
-.loading{
+#p-mine .loading{
   padding-top: 100px;
   text-align: center;
   font-size: 13px;
   color: #C9B8B4;
 }
-#p-hist .topbar{
-  padding: 0 20px 18px;
-  background: linear-gradient(180deg, #FFEDF0 0%, #FFF7F3 100%);
+#p-mine .err-banner{
+  padding: 11px 13px;
+  border-radius: 11px;
+  background: #FFF1F3;
+  border: 1px solid #FFD3DA;
+  font-size: 11.5px;
+  color: #C25A6E;
 }
-#p-hist .topbar-title{
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-#p-hist .topbar-sub{
-  font-size: 12px;
-  color: #A08B87;
-  margin-top: 3px;
-}
-#p-hist .body{
-  padding: 0 16px;
-}
-#p-hist .stat-row{
-  display: flex;
-  margin-bottom: 11px;
-}
-#p-hist .stat-card{
-  flex: 1;
-  margin-right: 9px;
+#p-mine .card{
   background: #FFFFFF;
-  border-radius: 14px;
-  padding: 13px 10px;
-  text-align: center;
+  border-radius: 15px;
   box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
-}
-#p-hist .stat-num{
-  font-size: 22px;
-  font-weight: 700;
-  color: #3A2A28;
-  line-height: 1.2;
-}
-#p-hist .stat-num.heart{
-  color: #FF5C77;
-}
-#p-hist .stat-label{
-  font-size: 11px;
-  color: #A08B87;
-  margin-top: 3px;
-}
-#p-hist .stat-card:last-child{
-  margin-right: 0;
-}
-#p-hist .cal-card{
-  padding: 14px 11px 11px;
   margin-bottom: 11px;
 }
-#p-hist .cal-head{
+#p-mine .me-card{
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 10px;
+  padding: 16px 15px;
 }
-#p-hist .cal-title{
-  font-size: 14px;
-  font-weight: 600;
-}
-#p-hist .cal-nav{
-  width: 32px;
-  height: 32px;
+#p-mine .me-av{
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #FFF0F3;
-  color: #FF6B81;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
-  line-height: 1;
+  font-size: 24px;
 }
-#p-hist .cal-nav.is-off{
-  background: #F7EFED;
-  color: #D8C9C5;
+#p-mine .me-main{
+  flex: 1;
+  padding: 0 11px;
 }
-#p-hist .cal-week{
-  display: flex;
-  padding-bottom: 6px;
-}
-#p-hist .cal-week-cell{
-  width: 14.2857%;
-  text-align: center;
-  font-size: 11px;
-  color: #B9A5A0;
-}
-#p-hist .cal-grid{
-  display: flex;
-  flex-wrap: wrap;
-}
-#p-hist .cal-cell{
-  width: 14.2857%;
-  height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-#p-hist .cell-day{
-  width: 26px;
-  height: 26px;
-  line-height: 26px;
-  text-align: center;
-  border-radius: 50%;
-  font-size: 13px;
-  color: #4A3A38;
-}
-#p-hist .cell-day.is-full{
-  background: #FFE8EC;
-  color: #FF5C77;
+#p-mine .me-name{
+  font-size: 17px;
   font-weight: 700;
 }
-#p-hist .cell-day.is-today{
-  border: 1.5px solid #FF6B81;
-  line-height: 23px;
-}
-#p-hist .cell-dots{
-  display: flex;
-  margin-top: 2px;
-  height: 6px;
-}
-#p-hist .dot{
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #F0E4E1;
-  margin-right: 3px;
-}
-#p-hist .dot:last-child{
-  margin-right: 0;
-}
-#p-hist .dot.sleep.on{
-  background: #8B7BFF;
-}
-#p-hist .dot.wake.on{
-  background: #FFB84D;
-}
-#p-hist .dot.is-full-legend{
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
-  background: #FFE8EC;
-  border: 1px solid #FFC2CC;
-}
-#p-hist .cal-legend{
-  display: flex;
-  align-items: center;
-  padding: 9px 4px 2px;
-  border-top: 1px solid #FDF1EE;
-  margin-top: 7px;
-}
-#p-hist .legend-item{
-  display: flex;
-  align-items: center;
-  margin-right: 16px;
-  font-size: 11px;
+#p-mine .me-sub{
+  font-size: 11.5px;
   color: #A08B87;
+  margin-top: 3px;
 }
-#p-hist .legend-item text{
-  margin-left: 5px;
+#p-mine .edit{
+  font-size: 12px;
+  color: #FF6B81;
+  background: #FFF0F3;
+  padding: 5px 12px;
+  border-radius: 499.5px;
 }
-#p-hist .section-head{
+#p-mine .info-card{
+  padding: 5px 15px;
+}
+#p-mine .info-line{
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 12px 4px 9px;
-}
-#p-hist .section-title{
-  font-size: 15px;
-  font-weight: 600;
-}
-#p-hist .log-card{
-  padding: 4px 14px;
-}
-#p-hist .log-line{
-  display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 11px 0;
   border-bottom: 1px solid #FDF4F1;
 }
-#p-hist .log-line:last-child{
+#p-mine .info-line:last-child{
   border-bottom: none;
 }
-#p-hist .log-reason{
-  font-size: 13.5px;
-  font-weight: 500;
+#p-mine .info-label{
+  font-size: 12.5px;
+  color: #A08B87;
+  flex: 0 0 70px;
 }
-#p-hist .log-time{
+#p-mine .info-value{
+  font-size: 13px;
+  color: #3A2A28;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
+}
+#p-mine .partner-card{
+  display: flex;
+  align-items: center;
+  padding: 14px 15px;
+}
+#p-mine .p-av{
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #FFF3E3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+#p-mine .p-main{
+  flex: 1;
+  padding: 0 10px;
+  min-width: 0;
+}
+#p-mine .p-name{
+  font-size: 15px;
+  font-weight: 600;
+}
+#p-mine .p-sub{
+  font-size: 11px;
+  color: #A08B87;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#p-mine .p-tag{
+  font-size: 10.5px;
+  color: #2FAE8B;
+  background: #EAF7F2;
+  padding: 4px 9px;
+  border-radius: 499.5px;
+}
+#p-mine .invite-card{
+  padding: 15px;
+}
+#p-mine .invite-title{
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 9px;
+}
+#p-mine .invite-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 11px;
+  background: #FBF3F1;
+}
+#p-mine .code{
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #FF5C77;
+}
+#p-mine .invite-note{
+  margin-top: 8px;
+  font-size: 11px;
+  color: #B9A5A0;
+}
+#p-mine .actions{
+  background: #FFFFFF;
+  border-radius: 15px;
+  box-shadow: 0 4px 13px rgba(255, 107, 129, 0.07);
+  padding: 3px 15px;
+}
+#p-mine .action{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #FDF4F1;
+  font-size: 14px;
+}
+#p-mine .action:last-child{
+  border-bottom: none;
+}
+#p-mine .action.danger text{
+  color: #E05A6E;
+}
+#p-mine .arrow{
+  color: #D8C9C5;
+  font-size: 17px;
+  line-height: 1;
+}
+#p-mine .foot{
+  margin-top: 14px;
+  text-align: center;
   font-size: 10.5px;
   color: #B9A5A0;
-  margin-top: 2px;
 }
-#p-hist .log-delta{
-  font-size: 15px;
+#p-mine .gate{
+  padding: 25px 20px;
+  text-align: center;
+}
+#p-mine .gate-emoji{
+  font-size: 40px;
+  line-height: 1;
+}
+#p-mine .gate-title{
+  font-size: 17px;
   font-weight: 700;
-  color: #FF6B81;
+  margin-top: 12px;
 }
-#p-hist .mock-tip{
-  margin-top: 11px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: #FDF3EF;
-  font-size: 11px;
-  color: #B08A7E;
+#p-mine .gate-desc{
+  font-size: 12px;
+  color: #A08B87;
+  margin-top: 7px;
+}
+#p-mine .gate-btn{
+  margin-top: 18px;
+  height: 43px;
 }
 </style>
 </head>
 <body>
 
 <div class="frame" id="p-home">
-  <div class="frame-label">首页 / 打卡</div>
+  <div class="frame-label">首页（外壳）</div>
 
   <div class="hero" style="padding-top:44px">
     <div class="blob blob-a"></div>
@@ -785,19 +1056,76 @@
     </div>
     <div class="hearts-row">
       <span class="heart-ico">❤️</span>
-      <span class="heart-num">128</span>
-      <span class="heart-unit">爱心</span>
+      <span class="heart-num">86</span>
+      <span class="heart-unit">我的爱心</span>
     </div>
-    <div class="streak-row">
-      <div class="streak-chip">🔥 连续 12 天全勤</div>
-      <div class="clock">22:14</div>
+    <div class="partner-hearts">
+      <span class="ph-emoji">🐻</span>
+      <span class="ph-name">小肚肚</span>
+      <span class="ph-num">💗 102</span>
     </div>
   </div>
 
   <div class="body">
     <div class="section-head">
+      <span class="section-title">我们的小功能</span>
+      <span class="section-sub">加功能只改注册表</span>
+    </div>
+
+    <div class="grid">
+      <div class="grid-item">
+        <div class="gi-emoji pink">🌙</div>
+        <div class="gi-name">早睡早起</div>
+        <div class="gi-desc">一起睡个好觉</div>
+        <div class="gi-sub">今日 1/2 · 连续 12 天</div>
+      </div>
+      <div class="grid-item is-off">
+        <div class="gi-emoji blue">🧾</div>
+        <div class="gi-name">消费申请</div>
+        <div class="gi-desc">花之前先报备</div>
+        <div class="gi-sub">待上线</div>
+      </div>
+      <div class="grid-item is-off">
+        <div class="gi-emoji orange">🍚</div>
+        <div class="gi-name">吃饭点餐</div>
+        <div class="gi-desc">今天吃点什么</div>
+        <div class="gi-sub">待上线</div>
+      </div>
+      <div class="grid-item is-off" style="opacity:.35">
+        <div class="gi-emoji pink">＋</div>
+        <div class="gi-name">下一个功能</div>
+        <div class="gi-desc">占位</div>
+      </div>
+    </div>
+
+    <div class="mock-tip">本地预览模式：数据只存在这台手机上，不会同步。</div>
+    <div class="safe-bottom"></div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active">首页</div>
+    <div class="tab">记录</div>
+    <div class="tab">我的</div>
+  </div>
+</div>
+
+
+<div class="frame" id="p-checkin">
+  <div class="frame-label">打卡页（点宫格进来）</div>
+  <div class="fakenav">早睡早起</div>
+
+  <div class="page">
+    <div class="stat-strip">
+      <div class="ss-main">
+        <span class="ss-num">🔥 12</span>
+        <span class="ss-label">连续全勤天数</span>
+      </div>
+      <div class="ss-time">22:14</div>
+    </div>
+
+    <div class="section-head">
       <span class="section-title">今天的打卡</span>
-      <span class="section-sub">2026-10-26</span>
+      <span class="section-sub">看日历 ›</span>
     </div>
 
     <div class="check-card is-done">
@@ -818,15 +1146,6 @@
         <div class="card-hint">05:30 开始，还有 7 小时 16 分</div>
       </div>
       <div class="btn is-disabled">未开放</div>
-    </div>
-
-    <div class="card partner-card">
-      <div class="partner-av">🐻</div>
-      <div class="partner-main">
-        <div class="partner-name">亲爱的</div>
-        <div class="partner-sub">今天也和你一起坚持 ❤️</div>
-      </div>
-      <div class="partner-tag">已配对</div>
     </div>
 
     <div class="card week-card">
@@ -852,82 +1171,60 @@
       <div class="rule-line"><span>✨ 当天两项都完成</span><span class="plus">+1</span></div>
       <div class="rule-line"><span>💞 两人同一天都完成同一项</span><span class="plus">+1</span></div>
       <div class="rule-line"><span>🔥 连续 7 天 / 30 天全勤</span><span class="plus">+10 / +50</span></div>
-      <div class="rule-note">时间窗口：早睡 21:30–23:59，早起 05:30–08:00（按服务器时间判定）</div>
+      <div class="rule-note">时间窗口按服务器时间判定；规则改完要同步 + 重新部署云函数</div>
     </div>
 
     <div class="safe-bottom"></div>
   </div>
-
-  <div class="tabbar"><div class="tab active">打卡</div><div class="tab">记录</div></div>
 </div>
 
 
-<div class="frame" id="p-hist">
-  <div class="frame-label">记录</div>
+<div class="frame" id="p-mine">
+  <div class="frame-label">我的（用户体系收口）</div>
+  <div class="fakenav">我的</div>
 
-  <div class="topbar" style="padding-top:44px">
-    <div class="topbar-title">我们的记录</div>
-    <div class="topbar-sub">2026 年 10 月</div>
-  </div>
-
-  <div class="body">
-    <div class="stat-row">
-      <div class="stat-card"><div class="stat-num">21</div><div class="stat-label">本月全勤</div></div>
-      <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">最长连续</div></div>
-      <div class="stat-card"><div class="stat-num heart">128</div><div class="stat-label">爱心余额</div></div>
+  <div class="page">
+    <div class="card me-card">
+      <div class="me-av">🐰</div>
+      <div class="me-main">
+        <div class="me-name">陈陈</div>
+        <div class="me-sub">和小肚肚 在一起第 57 天</div>
+      </div>
+      <div class="edit">修改</div>
     </div>
 
-    <div class="card cal-card">
-      <div class="cal-head">
-        <div class="cal-nav">‹</div>
-        <div class="cal-title">2026 年 10 月</div>
-        <div class="cal-nav is-off">›</div>
-      </div>
-      <div class="cal-week">
-        <div class="cal-week-cell">一</div><div class="cal-week-cell">二</div><div class="cal-week-cell">三</div>
-        <div class="cal-week-cell">四</div><div class="cal-week-cell">五</div><div class="cal-week-cell">六</div>
-        <div class="cal-week-cell">日</div>
-      </div>
-      <div class="cal-grid"><div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell"><div class="cell-day  is-full">1</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">2</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">3</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  ">4</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">5</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">6</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">7</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">8</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">9</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">10</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  ">11</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">12</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">13</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">14</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">15</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">16</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">17</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  ">18</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">19</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">20</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">21</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  ">22</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"><div class="cell-day  is-full">23</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">24</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day  is-full">25</div><div class="cell-dots"><div class="dot sleep on"></div><div class="dot wake on"></div></div></div><div class="cal-cell"><div class="cell-day is-today ">26</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"><div class="cell-day  ">27</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"><div class="cell-day  ">28</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"><div class="cell-day  ">29</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"><div class="cell-day  ">30</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"><div class="cell-day  ">31</div><div class="cell-dots"><div class="dot sleep "></div><div class="dot wake "></div></div></div><div class="cal-cell"></div></div>
-      <div class="cal-legend">
-        <div class="legend-item"><div class="dot sleep on"></div><span>早睡</span></div>
-        <div class="legend-item"><div class="dot wake on"></div><span>早起</span></div>
-        <div class="legend-item"><div class="dot is-full-legend"></div><span>全勤</span></div>
-      </div>
+    <div class="card info-card">
+      <div class="info-line"><span class="info-label">姓名</span><span class="info-value">陈某某</span></div>
+      <div class="info-line"><span class="info-label">手机号</span><span class="info-value">13800138000</span></div>
+      <div class="info-line"><span class="info-label">生日</span><span class="info-value">1995-01-01</span></div>
+      <div class="info-line"><span class="info-label">性别</span><span class="info-value">男</span></div>
+      <div class="info-line"><span class="info-label">自我介绍</span><span class="info-value">一个爱睡觉的人</span></div>
     </div>
 
-    <div class="section-head">
-      <span class="section-title">爱心明细</span>
-      <span class="tip">最近的变动</span>
+    <div class="card partner-card">
+      <div class="p-av">🐻</div>
+      <div class="p-main">
+        <div class="p-name">小肚肚</div>
+        <div class="p-sub">1996-05-20 · 爱吃甜食</div>
+      </div>
+      <div class="p-tag">已配对</div>
     </div>
 
-    <div class="card log-card">
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">早睡打卡</div><div class="log-time">2026-10-26 22:07</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">今日全勤</div><div class="log-time">2026-10-26 22:07</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">同步打卡</div><div class="log-time">2026-10-26 22:07</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">早起打卡</div><div class="log-time">2026-10-26 06:42</div></div>
-        <div class="log-delta">+1</div>
-      </div>
-      <div class="log-line">
-        <div class="log-main"><div class="log-reason">连续 7 天全勤</div><div class="log-time">2026-10-20 23:02</div></div>
-        <div class="log-delta">+10</div>
-      </div>
+    <div class="actions">
+      <div class="action"><span>修改资料</span><span class="arrow">›</span></div>
+      <div class="action"><span>爱心对账</span><span class="arrow">›</span></div>
+      <div class="action danger"><span>解除绑定</span><span class="arrow">›</span></div>
     </div>
 
+    <div class="foot"><span>当前模式：云开发（两人共享）</span></div>
     <div class="safe-bottom"></div>
   </div>
 
-  <div class="tabbar"><div class="tab">打卡</div><div class="tab active">记录</div></div>
+  <div class="tabbar">
+    <div class="tab">首页</div>
+    <div class="tab">记录</div>
+    <div class="tab active">我的</div>
+  </div>
 </div>
 
 </body>

@@ -3,6 +3,12 @@
   background: linear-gradient(180deg, #FFEDF0 0%, #FFF7F3 100%);
 }
 
+.back {
+  font-size: 26rpx;
+  color: #A08B87;
+  margin-bottom: 18rpx;
+}
+
 .title {
   font-size: 42rpx;
   font-weight: 700;

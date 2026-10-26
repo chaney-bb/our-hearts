@@ -4,7 +4,7 @@
  * 加一个新功能 = 新建一个页面目录 + 在这里加一行。
  * 首页只会照着这个表渲染宫格，不认识任何具体功能。
  *
- * enabled: false = 占坑未实现（不显示、点了也不会跳转）
+ * enabled: false = 占坑未实现（显示成灰卡「待上线」，点了不跳转）
  */
 module.exports = [
   {
@@ -13,7 +13,7 @@ module.exports = [
     emoji: '🌙',
     desc: '一起睡个好觉',
     color: 'pink',
-    page: '/pages/home/home', // TODO P2：改到 /pages/m/checkin/index（现在还用着旧页面）
+    page: '/pages/m/checkin/index',
     order: 1,
     enabled: true
   },

@@ -11,6 +11,7 @@ var GENDERS = [
 Page({
   data: {
     navTop: 24,
+    isEdit: false,
     emojis: EMOJIS,
     genders: GENDERS,
     form: {
@@ -27,10 +28,39 @@ Page({
     error: ''
   },
 
-  onLoad: function () {
+  onLoad: function (options) {
+    var self = this
     var d = new Date()
     var today = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)
-    this.setData({ navTop: app.globalData.navTop, today: today })
+    var isEdit = !!(options && options.mode === 'edit')
+
+    this.setData({ navTop: app.globalData.navTop, today: today, isEdit: isEdit })
+
+    // 编辑模式：先把现有资料填进去
+    if (isEdit) {
+      session.get().then(function (s) {
+        if (!s || !s.ok || !s.me) return
+        self.setData({
+          form: {
+            userId: s.me.userId || '',
+            realName: s.me.realName || '',
+            phone: s.me.phone || '',
+            birthday: s.me.birthday || '',
+            gender: s.me.gender || '',
+            bio: s.me.bio || '',
+            avatarEmoji: s.me.avatarEmoji || '🐰'
+          }
+        })
+      })
+    }
+  },
+
+  goBack: function () {
+    wx.navigateBack({
+      fail: function () {
+        wx.switchTab({ url: '/pages/home/home' })
+      }
+    })
   },
 
   onInput: function (e) {
@@ -75,15 +105,20 @@ Page({
     }
 
     this.setData({ submitting: true, error: '' })
-    session.register(f).then(function (res) {
+    var job = this.data.isEdit ? session.updateProfile(f) : session.register(f)
+    job.then(function (res) {
       self.setData({ submitting: false })
       if (!res || !res.ok) {
-        self.setData({ error: (res && res.message) || '登记失败' })
+        self.setData({ error: (res && res.message) || '提交失败' })
         return
       }
-      wx.showToast({ title: '登记好了', icon: 'success' })
+      wx.showToast({ title: self.data.isEdit ? '改好了' : '登记好了', icon: 'success' })
       setTimeout(function () {
-        wx.navigateBack({ fail: function () { wx.switchTab({ url: '/pages/home/home' }) } })
+        wx.navigateBack({
+          fail: function () {
+            wx.switchTab({ url: '/pages/home/home' })
+          }
+        })
       }, 600)
     })
   }
