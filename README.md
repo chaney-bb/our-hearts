@@ -14,6 +14,9 @@ M2 的双人配对代码已经写好，还没在真机上联调；M3 商城还�
 下载地址：<https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html>
 选「稳定版 Windows 64」，一路下一步装完，用微信扫码登录。
 
+> 装工具之前想先看看长什么样？双击 `design/preview.html` 用浏览器打开，
+> 那是用同一套样式生成的设计稿（首页 + 记录页），和真机效果 95% 一致。
+
 ### 第 2 步：导入项目
 
 打开工具 → 「导入项目」 → 目录选这个文件夹 `D:\情侣软件vibe coding`
@@ -110,7 +113,7 @@ hearts: {
 node scripts/sync-rules.mjs
 ```
 
-想确认没改坏，跑一下测试（几秒钟，20 个断言）：
+想确认没改坏，跑一下测试（几秒钟，23 个断言）：
 
 ```powershell
 node scripts/smoke-test.mjs
@@ -124,6 +127,10 @@ node scripts/smoke-test.mjs
 情侣软件vibe coding/
 ├─ 起步方案.md                   产品思路、为什么这么选、后面的路线
 ├─ project.config.json           开发者工具的项目配置（AppID 在这里）
+├─ design/
+│  ├─ preview.html               设计预览（浏览器直接打开）
+│  ├─ preview.png                预览截图
+│  └─ build-preview.mjs          重新生成预览：node design/build-preview.mjs
 ├─ miniprogram/                  小程序本体
 │  ├─ app.js / app.json / app.wxss
 │  ├─ pages/home/                首页：打卡 + 爱心 + 连续天数
