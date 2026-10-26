@@ -15,6 +15,24 @@ function levelOf(slot) {
   return (slot.sleep || 0) + (slot.wake || 0) > 0 ? 3 : 2
 }
 
+// 把当前生效的规则翻译成简介卡上的几行字（规则可配，所以不能写死）
+function buildRuleLines(cfg) {
+  const fmt = (t) =>
+    t.window.start + '–' + t.window.end + ' · ' + t.tiers.map((x) => (x.hearts > 0 ? '+' + x.hearts : '0')).join(' / ')
+
+  return [
+    { label: '🌙 早睡', value: fmt(cfg.sleep) },
+    { label: '☀️ 早起', value: fmt(cfg.wake) },
+    { label: '🔥 一个月打满 ' + cfg.monthly.requiredDays + ' 天', value: '+' + cfg.monthly.bonus },
+    { label: '😴 漏打', value: '−' + cfg.sleep.missPenalty + ' / −' + cfg.wake.missPenalty }
+  ]
+}
+
+function buildTierNote(cfg) {
+  const part = (t) => t.tiers.map((x) => x.from + '–' + x.to + ' +' + x.hearts).join('，')
+  return '早睡档位：' + part(cfg.sleep) + '；早起档位：' + part(cfg.wake)
+}
+
 Page({
   data: {
     ready: false,
@@ -26,6 +44,8 @@ Page({
     weekdays: ['一', '二', '三', '四', '五', '六', '日'],
     cells: [],
     misses: [],
+    ruleLines: [],
+    tierNote: '',
     items: [],
     clock: '',
     float: '',
@@ -81,6 +101,8 @@ Page({
         monthReached: !!(d.month && d.month.reached),
         misses: d.misses || [],
         cells: cells,
+        ruleLines: buildRuleLines(self.cfg),
+        tierNote: buildTierNote(self.cfg),
         error: '',
         errorRaw: ''
       })

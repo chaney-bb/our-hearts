@@ -93,12 +93,13 @@
     </view>
 
     <view class="card rules-card">
-      <view class="rules-title">爱心怎么来</view>
-      <view class="rule-line"><text>🌙 早睡（按打卡时间分档）</text><text class="plus">+2 / +1 / 0</text></view>
-      <view class="rule-line"><text>☀️ 早起</text><text class="plus">09:00 前 +1，之后 0</text></view>
-      <view class="rule-line"><text>🔥 一个月打满 22 天</text><text class="plus">+10</text></view>
-      <view class="rule-line"><text>😴 漏打早睡 / 早起</text><text class="plus">−1（可申诉）</text></view>
-      <view class="rule-note">规则由服务端下发；点右上角 ⋯ 可以看明细或申请修改（要对方同意才生效）。</view>
+      <view class="rules-title">当前规则</view>
+      <view class="rule-line" wx:for="{{ruleLines}}" wx:key="label">
+        <text>{{item.label}}</text>
+        <text class="plus">{{item.value}}</text>
+      </view>
+      <view class="rule-note">{{tierNote}}</view>
+      <view class="rule-note">点右上角 ⋯ 可以看完整明细或申请修改（要对方同意才生效）。</view>
     </view>
 
     <view class="safe-bottom"></view>

@@ -157,6 +157,27 @@ const homeMarkup = `
 </div>
 `
 
+// 打卡页日历格子（2026-10 是 10/1 周四 → 前面空 3 格）
+const calCells = (() => {
+  const out = []
+  for (let i = 0; i < 3; i++) out.push('<div class="cal-cell"></div>')
+  for (let d = 1; d <= 31; d++) {
+    const future = d > 26
+    const me = future ? 0 : d % 7 === 0 ? 1 : d % 5 === 0 ? 2 : 3
+    const ta = future ? 0 : d % 6 === 0 ? 2 : d % 4 === 0 ? 1 : 3
+    out.push(
+      '<div class="cal-cell">' +
+        '<div class="cal-day ' + (d === 26 ? 'is-today' : '') + '">' + d + '</div>' +
+        '<div class="bars">' +
+        '<div class="bar me lv' + me + '"></div>' +
+        '<div class="bar ta lv' + ta + '"></div>' +
+        '</div></div>'
+    )
+  }
+  while (out.length % 7 !== 0) out.push('<div class="cal-cell"></div>')
+  return out.join('')
+})()
+
 const checkinMarkup = `
 <div class="frame" id="p-checkin">
   <div class="frame-label">打卡页（点宫格进来）</div>
@@ -174,6 +195,15 @@ const checkinMarkup = `
     <div class="month-strip">
       <span class="ms-label">本月全勤</span>
       <span class="ms-val">18 / 22</span>
+      <span class="more">⋯</span>
+    </div>
+
+    <div class="miss-card">
+      <div class="miss-main">
+        <span class="miss-title">🌙 早睡漏打 · 2026-10-24</span>
+        <span class="miss-sub">已扣 1 爱心</span>
+      </div>
+      <div class="miss-btn">说明一下</div>
     </div>
 
     <div class="section-head">
@@ -201,29 +231,31 @@ const checkinMarkup = `
       <div class="btn is-disabled">未开放</div>
     </div>
 
-    <div class="card week-card">
-      <div class="week-head">
-        <span class="week-title">最近 7 天</span>
-        <span class="tip">满勤 5 天</span>
+    <div class="card cal-card">
+      <div class="cal-head">
+        <span class="cal-title">2026 年 10 月</span>
+        <div class="cal-legend">
+          <div class="lg"><div class="bar me lv3"></div><span>我</span></div>
+          <div class="lg"><div class="bar ta lv3"></div><span>TA</span></div>
+        </div>
       </div>
-      <div class="week-dots">
-        <div class="week-dot on"><div class="dot-mark">❤️</div><div class="dot-day">10/20</div></div>
-        <div class="week-dot on"><div class="dot-mark">❤️</div><div class="dot-day">10/21</div></div>
-        <div class="week-dot"><div class="dot-mark">·</div><div class="dot-day">10/22</div></div>
-        <div class="week-dot on"><div class="dot-mark">❤️</div><div class="dot-day">10/23</div></div>
-        <div class="week-dot on"><div class="dot-mark">❤️</div><div class="dot-day">10/24</div></div>
-        <div class="week-dot on"><div class="dot-mark">❤️</div><div class="dot-day">10/25</div></div>
-        <div class="week-dot"><div class="dot-mark">·</div><div class="dot-day">10/26</div></div>
+      <div class="cal-week">
+        <div class="cal-week-cell">一</div><div class="cal-week-cell">二</div><div class="cal-week-cell">三</div>
+        <div class="cal-week-cell">四</div><div class="cal-week-cell">五</div><div class="cal-week-cell">六</div>
+        <div class="cal-week-cell">日</div>
       </div>
+      <div class="cal-grid">${calCells}</div>
+      <div class="cal-note">实心=打满且有爱心 · 半透=打满但有一项 0 分 · 细线=只打了一项 · 空白=没打</div>
     </div>
 
     <div class="card rules-card">
-      <div class="rules-title">爱心怎么来</div>
-      <div class="rule-line"><span>🌙 早睡（按打卡时间分档）</span><span class="plus">+2 / +1 / 0</span></div>
-      <div class="rule-line"><span>☀️ 早起</span><span class="plus">09:00 前 +1，之后 0</span></div>
+      <div class="rules-title">当前规则</div>
+      <div class="rule-line"><span>🌙 早睡</span><span class="plus">21:30–24:00 · +2 / +1 / 0</span></div>
+      <div class="rule-line"><span>☀️ 早起</span><span class="plus">06:00–12:00 · +1 / 0</span></div>
       <div class="rule-line"><span>🔥 一个月打满 22 天</span><span class="plus">+10</span></div>
-      <div class="rule-line"><span>😴 这一晚没打早睡 / 早起</span><span class="plus">−1</span></div>
-      <div class="rule-note">档位：21:30–22:15 +2，22:15–23:15 +1，23:15 之后 0。规则由服务端下发，改规则要双方同意。</div>
+      <div class="rule-line"><span>😴 漏打</span><span class="plus">−1 / −1</span></div>
+      <div class="rule-note">早睡档位：21:30–22:15 +2，22:15–23:15 +1，23:15–24:00 +0；早起档位：06:00–09:00 +1，09:00–12:00 +0</div>
+      <div class="rule-note">点右上角 ⋯ 可以看完整明细或申请修改（要对方同意才生效）。</div>
     </div>
 
     <div class="safe-bottom"></div>
