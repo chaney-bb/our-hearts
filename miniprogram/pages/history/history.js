@@ -1,4 +1,5 @@
-var api = require('../../utils/api.js')
+var api = require('../../core/api.js')
+var checkinApi = require('../../modules/checkin/api.js')
 var rules = require('../../utils/rules.js')
 var app = getApp()
 
@@ -40,7 +41,7 @@ Page({
     var self = this
     var month = this.data.month || rules.monthKey(Date.now())
 
-    return api.call('history', { month: month }).then(function (res) {
+    return checkinApi.history(month).then(function (res) {
       if (!res || !res.ok) {
         self.setData({
           error: (res && res.message) || '加载失败，原因不明',
@@ -58,7 +59,7 @@ Page({
         error: '',
         errorRaw: '',
         warn: res.warn || '',
-        mode: res.mode || 'mock',
+        mode: api.getMode(),
         month: month,
         monthLabel: arr[0] + ' 年 ' + Number(arr[1]) + ' 月',
         canNext: month < currentMonth,

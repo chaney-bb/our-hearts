@@ -1,30 +1,71 @@
 /**
- * 把小程序端的规则文件同步到云函数
+ * 把 shared/ 里的"共享源码"同步成各处可运行的文件
  *
- * 用法（在项目根目录执行）：node scripts/sync-rules.mjs
+ * 用法：node scripts/sync-rules.mjs（或者双击项目根目录的「同步规则.bat」）
  *
- * 为什么要有这个脚本：
- *   规则必须在小程序端（算倒计时/按钮状态）和云函数端（真正判定）各有一份，
- *   云函数部署时只会打包它自己目录里的文件，引用不到外面的东西。
- *   为了保证两边永远一致，我们只维护 miniprogram/utils/rules.js，其余靠复制。
+ * 为什么需要同步：
+ *   小程序的代码包只能包含 miniprogram/ 目录，云函数部署时只会打包它自己的目录，
+ *   两边都引用不到仓库根目录的 shared/。所以 shared/ 是唯一真相，其余都是生成物。
+ *
+ * 改规则只改 shared/checkin-rules.js，改时间工具只改 shared/clock.js。
  */
-import { readFile, writeFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
+import { readFile, writeFile, mkdir } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const source = path.join(root, 'miniprogram', 'utils', 'rules.js')
-const target = path.join(root, 'cloudfunctions', 'api', 'rules.js')
 
-const banner = `/* ============================================================
+// 每个目标 = 源文件 + 输出位置 + （可选）clock 的相对路径
+const TARGETS = [
+  {
+    from: 'shared/clock.js',
+    to: 'miniprogram/utils/clock.js'
+  },
+  {
+    from: 'shared/checkin-rules.js',
+    to: 'miniprogram/utils/rules.js',
+    clock: './clock.js'
+  },
+  {
+    from: 'shared/clock.js',
+    to: 'cloudfunctions/api/core/clock.js'
+  },
+  {
+    from: 'shared/checkin-rules.js',
+    to: 'cloudfunctions/api/modules/checkin/rules.js',
+    clock: '../../core/clock.js'
+  }
+]
+
+function banner(fromPath) {
+  return `/* ============================================================
  * 【自动生成，请勿手改】
- * 源文件：miniprogram/utils/rules.js
+ * 源文件：${fromPath}
  * 同步命令：node scripts/sync-rules.mjs
  * ============================================================ */
 
 `
+}
 
-const code = await readFile(source, 'utf8')
-await writeFile(target, banner + code, 'utf8')
+let count = 0
 
-console.log('✅ 规则已同步 -> cloudfunctions/api/rules.js')
+for (const t of TARGETS) {
+  let code = await readFile(path.join(root, t.from), 'utf8')
+
+  if (t.clock) {
+    if (code.indexOf('@@CLOCK@@') < 0) {
+      throw new Error(t.from + ' 里没有找到 @@CLOCK@@ 占位符，无法生成 clock 引用')
+    }
+    code = code.replace("'@@CLOCK@@'", JSON.stringify(t.clock))
+  }
+
+  const out = path.join(root, t.to)
+  await mkdir(path.dirname(out), { recursive: true })
+  await writeFile(out, banner(t.from) + code, 'utf8')
+
+  console.log('  ✅ ' + t.from + '  ->  ' + t.to)
+  count++
+}
+
+console.log('\n同步完成，共 ' + count + ' 个文件。')
+console.log('⚠️  如果改的是规则：还要在开发者工具里右键 cloudfunctions/api → 上传并部署')

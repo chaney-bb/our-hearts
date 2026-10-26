@@ -1,25 +1,25 @@
 /* ============================================================
  * 【自动生成，请勿手改】
- * 源文件：miniprogram/utils/rules.js
+ * 源文件：shared/checkin-rules.js
  * 同步命令：node scripts/sync-rules.mjs
  * ============================================================ */
 
 /**
  * ============================================================
- *  打卡规则：全局唯一事实来源（改规则只改这个文件）
+ *  模块 · 打卡（checkin）的规则与纯逻辑（唯一来源）
  * ============================================================
- *  ⚠️ 这个文件有两份：小程序端和云函数端各一份，
- *     改完这里之后必须运行：  node scripts/sync-rules.mjs
- *     它会把本文件复制到 cloudfunctions/api/rules.js
+ *  ⚠️ 不要直接改 miniprogram/ 或 cloudfunctions/ 里的副本，
+ *     它们由 `node scripts/sync-rules.mjs` 从这里生成：
+ *       → miniprogram/utils/rules.js          （只用于显示：倒计时、按钮状态）
+ *       → cloudfunctions/api/modules/checkin/rules.js（用于真正判定）
  *
- *  为什么两边都要一份？
- *     因为客户端算的时间不可信（把手机时间调一下就能骗爱心），
- *     真正的判定必须在云函数里做，所以规则要能被云函数 require 到。
- *     小程序端那一份只用来"显示"（倒计时、按钮状态）。
+ *  为什么判定必须在云函数里：手机时间可以手动改，服务器时间不行。
+ *
+ *  规则数值（几点算早睡、一次加几分）将来会挪到"设置页可配"，
+ *  这里的 RULES 只作为兜底默认值。
  */
 
-// 北京时间相对 UTC 的偏移（云函数环境是 UTC，必须手动转）
-var TZ_OFFSET = 8 * 60 * 60 * 1000
+var clock = require("../../core/clock.js")
 
 var RULES = {
   // 打卡时间窗口（北京时间，24 小时制，start 必须小于 end）
@@ -30,77 +30,17 @@ var RULES = {
 
   // 爱心数值
   hearts: {
-    sleep: 1,        // 早睡打卡
-    wake: 1,         // 早起打卡
-    fullDay: 1,      // 当天两项都完成（全勤奖）
-    sync: 1,         // 两人同一天完成同一项（同步奖）
-    streak7: 10,     // 连续 7 天全勤
-    streak30: 50,    // 连续 30 天全勤
-    makeupCost: 10   // 补签卡价格（M3 商城才用到）
+    sleep: 1, // 早睡打卡
+    wake: 1, // 早起打卡
+    fullDay: 1, // 当天两项都完成（全勤奖）
+    sync: 1, // 两人同一天完成同一项（同步奖）
+    streak7: 10, // 连续 7 天全勤
+    streak30: 50, // 连续 30 天全勤
+    makeupCost: 10 // 补签卡价格（商城模块才用到）
   },
 
   // 顺序就是页面上的顺序
   types: ['sleep', 'wake']
-}
-
-/* ---------------------------------- 时间工具 ---------------------------------- */
-
-function pad2(n) {
-  return n < 10 ? '0' + n : '' + n
-}
-
-// 把时间戳换算成"北京时间的年月日时分"
-function parts(ms) {
-  var d = new Date(ms + TZ_OFFSET)
-  return {
-    y: d.getUTCFullYear(),
-    m: d.getUTCMonth() + 1,
-    d: d.getUTCDate(),
-    h: d.getUTCHours(),
-    mi: d.getUTCMinutes(),
-    dow: d.getUTCDay()
-  }
-}
-
-// 'YYYY-MM-DD'
-function dateKey(ms) {
-  var p = parts(ms)
-  return p.y + '-' + pad2(p.m) + '-' + pad2(p.d)
-}
-
-// 'HH:mm'
-function timeKey(ms) {
-  var p = parts(ms)
-  return pad2(p.h) + ':' + pad2(p.mi)
-}
-
-// 'NNNN-MM'（月份 key）
-function monthKey(ms) {
-  var p = parts(ms)
-  return p.y + '-' + pad2(p.m)
-}
-
-function minutesOf(hhmm) {
-  var arr = String(hhmm).split(':')
-  return Number(arr[0]) * 60 + Number(arr[1])
-}
-
-// 北京时间某天某时 -> 真实时间戳
-function wallToEpoch(y, m, d, h, mi) {
-  return Date.UTC(y, m - 1, d, h, mi, 0, 0) - TZ_OFFSET
-}
-
-function dayMinutes(ms) {
-  var p = parts(ms)
-  return p.h * 60 + p.mi
-}
-
-// 日期 key 加减天数
-function shiftKey(key, deltaDays) {
-  var arr = key.split('-')
-  var t = Date.UTC(Number(arr[0]), Number(arr[1]) - 1, Number(arr[2])) + deltaDays * 86400000
-  var d = new Date(t)
-  return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate())
 }
 
 /* ---------------------------------- 窗口状态 ---------------------------------- */
@@ -112,34 +52,22 @@ function shiftKey(key, deltaDays) {
 function windowState(type, ms) {
   var w = RULES.windows[type]
   if (!w) return 'expired'
-  var cur = dayMinutes(ms)
-  if (cur < minutesOf(w.start)) return 'upcoming'
-  if (cur > minutesOf(w.end)) return 'expired'
+  var cur = clock.dayMinutes(ms)
+  if (cur < clock.minutesOf(w.start)) return 'upcoming'
+  if (cur > clock.minutesOf(w.end)) return 'expired'
   return 'open'
 }
 
 // 距离窗口关闭还有多久（毫秒，可能为负）
 function msUntilWindowEnd(type, ms) {
   var w = RULES.windows[type]
-  var p = parts(ms)
-  return wallToEpoch(p.y, p.m, p.d, Math.floor(minutesOf(w.end) / 60), minutesOf(w.end) % 60) - ms
+  return clock.msUntilTime(w.end, ms)
 }
 
 // 距离窗口开放还有多久（毫秒）
 function msUntilWindowStart(type, ms) {
   var w = RULES.windows[type]
-  var p = parts(ms)
-  return wallToEpoch(p.y, p.m, p.d, Math.floor(minutesOf(w.start) / 60), minutesOf(w.start) % 60) - ms
-}
-
-// 把毫秒说人话
-function humanize(ms) {
-  var m = Math.max(0, Math.floor(ms / 60000))
-  if (m < 1) return '1 分钟内'
-  if (m < 60) return m + ' 分钟'
-  var h = Math.floor(m / 60)
-  var r = m % 60
-  return h + ' 小时' + (r ? ' ' + r + ' 分' : '')
+  return clock.msUntilTime(w.start, ms)
 }
 
 /* ---------------------------------- 页面展示 ---------------------------------- */
@@ -155,11 +83,11 @@ function describeItem(type, records, now) {
   var hint = ''
 
   if (rec) {
-    hint = timeKey(rec.at) + ' 已完成'
+    hint = clock.timeKey(rec.at) + ' 已完成'
   } else if (state === 'open') {
-    hint = '还剩 ' + humanize(msUntilWindowEnd(type, now))
+    hint = '还剩 ' + clock.humanize(msUntilWindowEnd(type, now))
   } else if (state === 'upcoming') {
-    hint = w.start + ' 开始，还有 ' + humanize(msUntilWindowStart(type, now))
+    hint = w.start + ' 开始，还有 ' + clock.humanize(msUntilWindowStart(type, now))
   } else {
     hint = '今天错过了，明天再来'
   }
@@ -172,7 +100,7 @@ function describeItem(type, records, now) {
     window: w.start + ' – ' + w.end,
     state: state,
     done: !!rec,
-    atText: rec ? timeKey(rec.at) : '',
+    atText: rec ? clock.timeKey(rec.at) : '',
     hint: hint,
     canCheck: !rec && state === 'open'
   }
@@ -184,7 +112,7 @@ function describeToday(records, now) {
     return describeItem(t, records, now)
   })
   return {
-    date: dateKey(now),
+    date: clock.dateKey(now),
     items: items,
     fullDay: !!(records && records.sleep && records.wake)
   }
@@ -223,31 +151,23 @@ function calcStreak(fullDayKeys, todayKeyValue) {
   var set = {}
   for (var i = 0; i < fullDayKeys.length; i++) set[fullDayKeys[i]] = true
 
-  var cursor = set[todayKeyValue] ? todayKeyValue : shiftKey(todayKeyValue, -1)
+  var cursor = set[todayKeyValue] ? todayKeyValue : clock.shiftKey(todayKeyValue, -1)
   var n = 0
   while (set[cursor]) {
     n++
-    cursor = shiftKey(cursor, -1)
+    cursor = clock.shiftKey(cursor, -1)
   }
   return n
 }
 
-module.exports = {
-  TZ_OFFSET: TZ_OFFSET,
+// 把时间工具一起导出，页面里只需要 require 这一个文件
+module.exports = Object.assign({}, clock, {
   RULES: RULES,
-  pad2: pad2,
-  parts: parts,
-  dateKey: dateKey,
-  timeKey: timeKey,
-  monthKey: monthKey,
-  shiftKey: shiftKey,
-  minutesOf: minutesOf,
   windowState: windowState,
   msUntilWindowEnd: msUntilWindowEnd,
   msUntilWindowStart: msUntilWindowStart,
-  humanize: humanize,
   describeItem: describeItem,
   describeToday: describeToday,
   checkinAwards: checkinAwards,
   calcStreak: calcStreak
-}
+})

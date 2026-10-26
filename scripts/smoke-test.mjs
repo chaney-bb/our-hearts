@@ -24,7 +24,7 @@ globalThis.wx = {
 }
 
 const rules = require('../miniprogram/utils/rules.js')
-const mock = require('../miniprogram/utils/mock.js')
+const mock = require('../miniprogram/core/mock.js')
 
 let failed = 0
 function ok(name, condition, extra) {
@@ -103,30 +103,30 @@ ok('早睡1 + 全勤1 + 同步1 + 连续7天10 = 13', total === 13, awards)
 console.log('\n[4] 本地模式完整流程')
 
 setNow(bj(2026, 10, 26, 22, 5))
-const r1 = await mock.call('checkin', { type: 'sleep' })
+const r1 = await mock.call('checkin.act', { type: 'sleep' })
 ok('22:05 早睡打卡成功', r1.ok === true && r1.reward.delta === 1, r1)
-ok('爱心变成 1', r1.home.hearts === 1, r1.home.hearts)
+ok('爱心变成 1', r1.detail.hearts === 1, r1.detail.hearts)
 
-const r2 = await mock.call('checkin', { type: 'sleep' })
+const r2 = await mock.call('checkin.act', { type: 'sleep' })
 ok('重复打卡被拦住', r2.ok === false && r2.code === 'DUP', r2)
 
-const r3 = await mock.call('checkin', { type: 'wake' })
+const r3 = await mock.call('checkin.act', { type: 'wake' })
 ok('22:05 打早起卡被拦住', r3.ok === false && r3.code === 'CLOSED', r3)
 
 setNow(bj(2026, 10, 27, 6, 20))
-const r4 = await mock.call('checkin', { type: 'wake' })
+const r4 = await mock.call('checkin.act', { type: 'wake' })
 ok('第二天 06:20 早起成功 +1', r4.ok === true && r4.reward.delta === 1, r4)
-ok('爱心变成 2', r4.home.hearts === 2, r4.home.hearts)
+ok('爱心变成 2', r4.detail.hearts === 2, r4.detail.hearts)
 
 setNow(bj(2026, 10, 27, 22, 30))
-const r5 = await mock.call('checkin', { type: 'sleep' })
+const r5 = await mock.call('checkin.act', { type: 'sleep' })
 ok('当晚 22:30 早睡 + 全勤奖 = 2', r5.ok === true && r5.reward.delta === 2, r5.reward)
 
-const home = await mock.call('home', {})
+const home = await mock.call('checkin.detail', {})
 ok('首页连续天数 = 1', home.streak === 1, home.streak)
 ok('今天两项都完成', home.today.fullDay === true)
 
-const history = await mock.call('history', { month: '2026-10' })
+const history = await mock.call('checkin.history', { month: '2026-10' })
 ok('10 月记录里有 10-26 和 10-27', !!history.days['2026-10-26'] && !!history.days['2026-10-27'])
 ok('10 月全勤 1 天', history.stats.fullCount === 1, history.stats)
 ok('明细有 4 条奖励', history.logs.length === 4, history.logs.length)

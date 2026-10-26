@@ -1,12 +1,12 @@
 /**
  * 数据层统一入口：页面只调这里，不关心数据到底存在云上还是本机
  *
- * api.init()            -> 返回 'cloud' 或 'mock'
- * api.call(action, d)   -> Promise<结果>
+ * api.init()            -> 'cloud' 或 'mock'
+ * api.call(action, d)   -> Promise<结果>   action 形如 'checkin.act'
  * api.forceLocal(reason)-> 运行中强制切回本地模式（云开发出问题时的应急开关）
- * api.diagnose()        -> 打印一行环境信息，排查用
+ * api.getMode()         -> 当前模式
  */
-var config = require('./config.js')
+var config = require('../utils/config.js')
 var cloud = require('./cloud.js')
 var mock = require('./mock.js')
 
@@ -24,7 +24,8 @@ function init() {
   }
 
   if (!wx.cloud) {
-    lastError = '当前基础库不支持云开发（需要 2.2.3 以上），请在开发者工具「详情 → 本地设置」里调高调试基础库版本'
+    lastError =
+      '当前基础库不支持云开发（需要 2.2.3 以上），请在开发者工具「详情 → 本地设置」里调高调试基础库版本'
     console.warn('[未检测到 wx.cloud]', lastError)
     mode = 'mock'
     client = mock
@@ -53,16 +54,19 @@ function explain(raw) {
     return '云函数 api 还没部署。右键 cloudfunctions/api 文件夹 → 上传并部署：云端安装依赖'
   }
   if (/collection not exist|DATABASE_COLLECTION_NOT_EXIST|-502005/i.test(text)) {
-    return '云开发数据库里缺集合。去「云开发 → 数据库」建 4 个：profiles、couples、checkins、heart_logs'
+    return '云开发数据库里缺集合。去「云开发 → 数据库」建 profiles、couples、checkins、heart_logs'
   }
   if (/env.*not.*exist|CLOUDBASE_ENV|invalid env|-601001/i.test(text)) {
     return '环境 ID 不对，或这个环境不属于当前 AppID。去云开发控制台复制一遍环境 ID 对比'
   }
   if (/permission|PERMISSION_DENIED|-502001|not authorized/i.test(text)) {
-    return '数据库权限被拒。把 4 个集合的权限都改成「所有用户不可读写」（只有云函数能操作）'
+    return '数据库权限被拒。把集合的权限都改成「所有用户不可读写」（只有云函数能操作）'
   }
   if (/timeout|TIMEOUT|-404011/i.test(text)) {
     return '云函数执行超时，可能是没部署成功或云环境异常，重新部署一次试试'
+  }
+  if (/CLIENT_OUTDATED/i.test(text)) {
+    return '小程序界面还是旧版本，在开发者工具里点一下「编译」'
   }
   return '原始错误：' + text
 }
@@ -94,7 +98,9 @@ function diagnose(envId) {
   try {
     sdk = (wx.getAppBaseInfo ? wx.getAppBaseInfo() : wx.getSystemInfoSync()).SDKVersion
   } catch (e) {}
-  console.log('[环境诊断] 模式=' + mode + ' | 环境ID=' + (envId || '(空)') + ' | wx.cloud=' + !!wx.cloud + ' | 基础库=' + sdk)
+  console.log(
+    '[环境诊断] 模式=' + mode + ' | 环境ID=' + (envId || '(空)') + ' | wx.cloud=' + !!wx.cloud + ' | 基础库=' + sdk
+  )
 }
 
 module.exports = {

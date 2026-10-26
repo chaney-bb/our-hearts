@@ -1,13 +1,13 @@
 /**
  * 小程序端 -> 云函数 的调用封装
- * 云函数只有一个，叫 api，用 action 区分干什么
+ * 云函数只有一个，叫 api，用 "<模块>.<动作>" 区分干什么
  */
 function call(action, data) {
   return new Promise(function (resolve, reject) {
     wx.cloud
       .callFunction({
         name: 'api',
-        data: Object.assign({ action: action }, data || {})
+        data: { action: action, payload: data || {} }
       })
       .then(function (res) {
         resolve(res.result)

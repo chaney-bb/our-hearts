@@ -2,8 +2,10 @@
 
 一个只给你和 TA 用的早睡早起打卡小程序：打卡得爱心，爱心在商城换礼物。
 
-**当前进度：M0 + M1 已完成**（项目骨架 + 打卡闭环 + 爱心账本 + 记录日历），
-M2 的双人配对代码已经写好，还没在真机上联调；M3 商城还没开始。
+**当前进度**：打卡功能可用（M0–M2，已出体验版），**系统架构骨架已搭好（P1a）**：
+内核（身份/爱心/时间/管道）+ 模块（打卡）+ 注册表，商城还没开始。
+
+**下一步做什么、先做什么，看 [`待办与开发步骤.md`](待办与开发步骤.md)。**
 
 ---
 
@@ -92,11 +94,12 @@ M2 的双人配对代码已经写好，还没在真机上联调；M3 商城还�
 
 ## 三、规则在哪儿改
 
-**所有规则都集中在 `miniprogram/utils/rules.js` 这一个文件里**：
+**规则的唯一来源是 `shared/checkin-rules.js`**（时间工具在 `shared/clock.js`）。
+`miniprogram/utils/rules.js` 和 `cloudfunctions/api/modules/checkin/rules.js` 都是它生成的副本，**别手改**。
 
 ```js
 windows: {
-  sleep: { start: '21:30', end: '23:59' },  // 早睡窗口
+  sleep: { start: '5:00',  end: '23:59' },  // 早睡窗口（你上次改的）
   wake:  { start: '05:30', end: '08:00' }   // 早起窗口
 },
 hearts: {
@@ -111,8 +114,8 @@ hearts: {
 
 | 步骤 | 做什么 | 为什么 |
 |---|---|---|
-| 1 | 改 `miniprogram/utils/rules.js` | 唯一源头 |
-| 2 | 双击项目根目录的 **`同步规则.bat`** | 把规则复制到 `cloudfunctions/api/rules.js`，并跑一遍测试 |
+| 1 | 改 `shared/checkin-rules.js` | 唯一源头 |
+| 2 | 双击项目根目录的 **`同步规则.bat`** | 生成 4 份副本（2 端 × 规则/时间）+ 跑两套测试 |
 | 3 | 开发者工具里右键 `cloudfunctions/api` → **上传并部署：云端安装依赖** | 云端跑的是"已部署的代码"，不改文件就还是旧规则 |
 
 **第 3 步最容易忘**，症状很迷惑：页面上按钮亮了（客户端是新规则），但一点就提示"还没到时间"（云端还是旧规则）。
@@ -121,8 +124,8 @@ hearts: {
 `同步规则.bat` 里其实就是三条命令，你想手动跑也行：
 
 ```powershell
-node scripts/sync-rules.mjs   # 同步规则到云函数
-node scripts/smoke-test.mjs   # 测打卡规则，顺便打印当前生效的窗口和分值
+node scripts/sync-rules.mjs   # 生成 4 份副本
+node scripts/smoke-test.mjs   # 测打卡规则 + 本地流程，打印当前生效的窗口和分值
 node scripts/cloud-test.mjs   # 用假数据库把云函数完整跑一遍（不用部署就能测）
 ```
 
@@ -151,20 +154,44 @@ node scripts/cloud-test.mjs   # 用假数据库把云函数完整跑一遍（不
 │     ├─ api.js                  数据层入口（自动选本地/云端）
 │     ├─ mock.js                 本地预览模式的假数据实现
 │     └─ cloud.js                云函数调用封装
-├─ cloudfunctions/api/           云函数（真正的判定逻辑）
-│  ├─ index.js                   所有接口：home / checkin / history / joinCouple
-│  ├─ rules.js                   自动生成，别手改
+├─ shared/                       ⭐ 共享源码（唯一真相，改这里）
+│  ├─ clock.js                  时间工具
+│  └─ checkin-rules.js          打卡规则
+├─ cloudfunctions/api/           云函数：只有一个入口 + 内核 + 模块
+│  ├─ index.js                   路由：'checkin.act' → 模块
+│  ├─ core/                      内核（identity / hearts / clock / settings / context / registry / respond / db）
+│  ├─ modules/
+│  │  ├─ checkin/                打卡模块（index + store + rules）
+│  │  ├─ consumption/            ⬜ 消费申请（占坑）
+│  │  └─ meal/                   ⬜ 吃饭点餐（占坑）
 │  └─ package.json
+├─ miniprogram/
+│  ├─ core/                      api / modules(注册表) / session / mock / cloud
+│  ├─ modules/checkin/api.js     模块接口层
+│  ├─ utils/                     clock.js、rules.js（生成物）、config.js（环境ID）
+│  └─ pages/                     home、history、m/{consumption,meal}（占坑）
+├─ 待办与开发步骤.md              ⭐ 工作清单：下一步做什么
+├─ 架构设计.md / 内核设计.md      为什么这么分层
+├─ 同步规则.bat                   改完规则双击它
 └─ scripts/
-   ├─ sync-rules.mjs             规则同步到云函数
-   ├─ smoke-test.mjs             规则 + 本地流程的测试
-   ├─ cloud-test.mjs             云函数集成测试（用假数据库）
+   ├─ sync-rules.mjs             生成 4 份副本
+   ├─ smoke-test.mjs             规则 + 本地流程测试
+   ├─ cloud-test.mjs             云函数集成测试（假数据库）
    └─ fake-cloud.mjs             假的 wx-server-sdk，只给测试用
 ```
 
 ---
 
 ## 五、常见问题
+
+**Q：改了云函数之后，小程序提示「界面还是旧版本」或者「没有这个功能 / 没有这个动作」？**
+
+部署顺序问题。**改了云函数要先部署，再点编译**：
+
+| 谁比较新 | 你会看到 |
+|---|---|
+| 云函数比界面新 | 「小程序界面还是旧版本，点一下编译」← 友好提示，点编译即可 |
+| 界面比云函数新 | 「没有这个功能 / 没有这个动作」← 去右键 `cloudfunctions/api` 重新部署 |
 
 **Q：上传云函数报「请在编辑器云函数根目录（cloudfunctionRoot）选择一个云环境」？**
 

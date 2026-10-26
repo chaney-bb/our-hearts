@@ -1,4 +1,6 @@
-var api = require('../../utils/api.js')
+var api = require('../../core/api.js')
+var session = require('../../core/session.js')
+var checkinApi = require('../../modules/checkin/api.js')
 var rules = require('../../utils/rules.js')
 var app = getApp()
 
@@ -42,54 +44,72 @@ Page({
     })
   },
 
-  // 拉取首页数据
+  // 首页数据 = 内核的"我是谁" + 打卡模块的"今天怎么样"
+  // 两个请求并行发出，加新功能时首页会变成更多个 summary 并行，不用改结构
   load: function () {
     var self = this
-    return api.call('home').then(function (res) {
-      if (!res || !res.ok) {
+
+    return Promise.all([session.get(), checkinApi.detail()]).then(function (arr) {
+      var s = arr[0]
+      var d = arr[1]
+      var bad = !s || !s.ok ? s : !d || !d.ok ? d : null
+
+      if (bad) {
         // 出错了也要说清楚原因，不能一直卡在"正在唤醒"
         self.setData({
           ready: false,
-          error: (res && res.message) || '加载失败，原因不明',
-          errorRaw: (res && res.raw) || ''
+          error: (bad && bad.message) || '加载失败，原因不明',
+          errorRaw: (bad && (bad.detail || bad.raw)) || ''
         })
         return
       }
-      // 用服务器时间校准本机（防止手机时间不准）
-      self.offset = res.serverNow - Date.now()
 
-      // 比对云端规则和本地规则：不一致说明云函数还是旧代码，没重新部署
-      var stale = ''
-      var sr = res.rules
-      if (sr && sr.windows && sr.windows.sleep && sr.windows.wake) {
-        var mine = { windows: rules.RULES.windows, hearts: rules.RULES.hearts }
-        if (JSON.stringify(sr) !== JSON.stringify(mine)) {
-          var winDiff = JSON.stringify(sr.windows) !== JSON.stringify(mine.windows)
-          if (winDiff) {
-            stale =
-              '云端还在跑旧规则（早睡 ' + sr.windows.sleep.start + ' 开始、早起 ' + sr.windows.wake.start +
-              ' 开始），你本地已经改成 ' + mine.windows.sleep.start + ' / ' + mine.windows.wake.start +
-              '。双击项目根目录的「同步规则.bat」，再右键 cloudfunctions/api 上传并部署才会生效'
-          } else {
-            stale =
-              '云端的爱心分值和本地不一致（云端：早睡 +' + sr.hearts.sleep + ' 全勤 +' + sr.hearts.fullDay +
-              '，本地：早睡 +' + mine.hearts.sleep + ' 全勤 +' + mine.hearts.fullDay +
-              '）。双击「同步规则.bat」，再重新部署云函数'
-          }
-        }
-      }
+      // 用服务器时间校准本机（防止手机时间不准）
+      self.offset = (d.serverNow || s.serverNow || Date.now()) - Date.now()
 
       self.setData({
-        home: res,
+        home: {
+          me: s.me,
+          partner: s.partner,
+          bound: s.bound,
+          inviteCode: s.inviteCode,
+          daysTogether: s.daysTogether,
+          hearts: d.hearts,
+          streak: d.streak,
+          today: d.today,
+          recent: d.recent
+        },
         ready: true,
-        mode: res.mode || 'mock',
+        mode: api.getMode(),
         error: '',
         errorRaw: '',
-        rulesStale: stale
+        rulesStale: self.checkStale(d.rules)
       })
+
       self.render()
       self.startTick()
     })
+  },
+
+  // 云端规则和本地规则不一致 -> 说明云函数没重新部署
+  checkStale: function (sr) {
+    if (!sr || !sr.windows || !sr.windows.sleep || !sr.windows.wake) return ''
+    var mine = { windows: rules.RULES.windows, hearts: rules.RULES.hearts }
+    if (JSON.stringify(sr) === JSON.stringify(mine)) return ''
+
+    var winDiff = JSON.stringify(sr.windows) !== JSON.stringify(mine.windows)
+    if (winDiff) {
+      return (
+        '云端还在跑旧规则（早睡 ' + sr.windows.sleep.start + ' 开始、早起 ' + sr.windows.wake.start +
+        ' 开始），你本地已经改成 ' + mine.windows.sleep.start + ' / ' + mine.windows.wake.start +
+        '。双击项目根目录的「同步规则.bat」，再右键 cloudfunctions/api 上传并部署才会生效'
+      )
+    }
+    return (
+      '云端的爱心分值和本地不一致（云端：早睡 +' + sr.hearts.sleep + ' 全勤 +' + sr.hearts.fullDay +
+      '，本地：早睡 +' + mine.hearts.sleep + ' 全勤 +' + mine.hearts.fullDay +
+      '）。双击「同步规则.bat」，再重新部署云函数'
+    )
   },
 
   retry: function () {
@@ -170,14 +190,14 @@ Page({
     if (this.busy) return
 
     this.busy = true
-    api.call('checkin', { type: type }).then(function (res) {
+    checkinApi.act(type).then(function (res) {
       self.busy = false
       if (!res || !res.ok) {
         wx.showToast({ title: (res && res.message) || '打卡失败', icon: 'none' })
         return
       }
-      self.offset = res.home.serverNow - Date.now()
-      self.setData({ home: res.home })
+      self.offset = res.serverNow - Date.now()
+      self.setData({ home: Object.assign({}, self.data.home, res.detail) })
       self.render()
 
       var r = res.reward || { delta: 0, reasons: [] }
@@ -216,7 +236,7 @@ Page({
           wx.showToast({ title: '邀请码是 6 位哦', icon: 'none' })
           return
         }
-        api.call('joinCouple', { inviteCode: code }).then(function (r) {
+        session.bind(code).then(function (r) {
           if (!r || !r.ok) {
             wx.showToast({ title: (r && r.message) || '配对失败', icon: 'none' })
             return
