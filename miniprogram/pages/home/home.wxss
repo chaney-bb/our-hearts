@@ -142,14 +142,23 @@
 }
 
 /* ================= 两列宫格 ================= */
+/* 关键：每一项精确占 50%，间隔用内边距做。
+   不要用"宽度 50% - 间隔 + 右外边距"那种算法 —— 像素换算的小数误差
+   会把第二项挤到下一行（大屏手机上特别容易踩）。 */
 .grid {
   display: flex;
   flex-wrap: wrap;
+  margin: 0 -10rpx;
+}
+
+.grid-cell {
+  width: 50%;
+  box-sizing: border-box;
+  padding: 0 10rpx;
+  margin-bottom: 20rpx;
 }
 
 .grid-item {
-  width: calc(50% - 11rpx);
-  margin: 0 22rpx 22rpx 0;
   padding: 30rpx 26rpx;
   background: #FFFFFF;
   border-radius: 30rpx;
@@ -157,10 +166,6 @@
   position: relative;
   overflow: hidden;
   transition: transform 0.15s ease;
-}
-
-.grid-item:nth-child(2n) {
-  margin-right: 0;
 }
 
 .grid-item:active {

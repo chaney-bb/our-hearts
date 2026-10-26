@@ -120,28 +120,36 @@ const homeMarkup = `
     </div>
 
     <div class="grid">
-      <div class="grid-item">
-        <div class="gi-emoji pink">🌙</div>
-        <div class="gi-name">早睡早起</div>
-        <div class="gi-desc">一起睡个好觉</div>
-        <div class="gi-sub">今日 1/2 · 连续 12 天</div>
+      <div class="grid-cell">
+        <div class="grid-item">
+          <div class="gi-emoji pink">🌙</div>
+          <div class="gi-name">早睡早起</div>
+          <div class="gi-desc">一起睡个好觉</div>
+          <div class="gi-sub">今日 1/2 · 连续 12 天</div>
+        </div>
       </div>
-      <div class="grid-item is-off">
-        <div class="gi-emoji blue">🧾</div>
-        <div class="gi-name">消费申请</div>
-        <div class="gi-desc">花之前先报备</div>
-        <div class="gi-sub">待上线</div>
+      <div class="grid-cell">
+        <div class="grid-item is-off">
+          <div class="gi-emoji blue">🧾</div>
+          <div class="gi-name">消费申请</div>
+          <div class="gi-desc">花之前先报备</div>
+          <div class="gi-sub">待上线</div>
+        </div>
       </div>
-      <div class="grid-item is-off">
-        <div class="gi-emoji orange">🍚</div>
-        <div class="gi-name">吃饭点餐</div>
-        <div class="gi-desc">今天吃点什么</div>
-        <div class="gi-sub">待上线</div>
+      <div class="grid-cell">
+        <div class="grid-item is-off">
+          <div class="gi-emoji orange">🍚</div>
+          <div class="gi-name">吃饭点餐</div>
+          <div class="gi-desc">今天吃点什么</div>
+          <div class="gi-sub">待上线</div>
+        </div>
       </div>
-      <div class="grid-item is-off" style="opacity:.35">
-        <div class="gi-emoji pink">＋</div>
-        <div class="gi-name">下一个功能</div>
-        <div class="gi-desc">占位</div>
+      <div class="grid-cell">
+        <div class="grid-item is-off" style="opacity:.35">
+          <div class="gi-emoji pink">＋</div>
+          <div class="gi-name">下一个功能</div>
+          <div class="gi-desc">占位</div>
+        </div>
       </div>
     </div>
 
@@ -296,7 +304,7 @@ const mineMarkup = `
 
     <div class="actions">
       <div class="action"><span>修改资料</span><span class="arrow">›</span></div>
-      <div class="action"><span>爱心对账</span><span class="arrow">›</span></div>
+      <div class="action"><span>爱心明细</span><span class="arrow">›</span></div>
       <div class="action danger"><span>解除绑定</span><span class="arrow">›</span></div>
     </div>
 

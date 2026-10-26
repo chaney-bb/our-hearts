@@ -75,17 +75,13 @@
       </view>
 
       <view class="grid">
-        <view
-          class="grid-item {{item.enabled ? '' : 'is-off'}}"
-          wx:for="{{grid}}"
-          wx:key="key"
-          data-item="{{item}}"
-          bindtap="openModule"
-        >
-          <view class="gi-emoji {{item.color}}">{{item.emoji}}</view>
-          <view class="gi-name">{{item.name}}</view>
-          <view class="gi-desc">{{item.desc}}</view>
-          <view class="gi-sub" wx:if="{{item.sub}}">{{item.sub}}</view>
+        <view class="grid-cell" wx:for="{{grid}}" wx:key="key" data-item="{{item}}" bindtap="openModule">
+          <view class="grid-item {{item.enabled ? '' : 'is-off'}}">
+            <view class="gi-emoji {{item.color}}">{{item.emoji}}</view>
+            <view class="gi-name">{{item.name}}</view>
+            <view class="gi-desc">{{item.desc}}</view>
+            <view class="gi-sub" wx:if="{{item.sub}}">{{item.sub}}</view>
+          </view>
         </view>
       </view>
 
