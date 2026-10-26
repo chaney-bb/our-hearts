@@ -28,8 +28,7 @@
       <text class="ms-label">本月全勤</text>
       <text class="ms-val">{{monthText}}</text>
       <text class="ms-tag" wx:if="{{monthReached}}">已达标 🎉</text>
-      <view class="more" bindtap="openMenu">⋯</view>
-    </view>
+      <view class="more" bindtap="openMenu">⋯</view>    </view>
 
     <!-- 缺卡提示 + 申诉入口 -->
     <view class="miss-card" wx:for="{{misses}}" wx:key="dayKey" wx:for-item="m">
@@ -108,5 +107,26 @@
   <view class="float-heart" wx:if="{{float}}">
     <view class="float-num">{{float}} ❤️</view>
     <view class="float-sub" wx:if="{{floatSub}}">{{floatSub}}</view>
+  </view>
+
+  <!-- 右上角 ⋯ 的菜单（自绘，不依赖系统弹窗） -->
+  <view class="sheet-mask" wx:if="{{showMenu}}" bindtap="closeMenu"></view>
+  <view class="sheet" wx:if="{{showMenu}}">
+    <view class="sheet-title">打卡规则</view>
+    <view class="sheet-item" bindtap="gotoRules" data-mode="view">
+      <text class="sheet-emoji">📖</text>
+      <view class="sheet-main">
+        <text class="sheet-name">查看规则明细</text>
+        <text class="sheet-desc">现在按什么时间窗口给分</text>
+      </view>
+    </view>
+    <view class="sheet-item" bindtap="gotoRules" data-mode="edit">
+      <text class="sheet-emoji">✏️</text>
+      <view class="sheet-main">
+        <text class="sheet-name">修改打卡规则</text>
+        <text class="sheet-desc">要 TA 同意之后才生效</text>
+      </view>
+    </view>
+    <view class="sheet-cancel" bindtap="closeMenu">取消</view>
   </view>
 </view>

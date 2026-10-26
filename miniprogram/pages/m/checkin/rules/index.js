@@ -44,10 +44,14 @@ Page({
         self.setData({ ready: false, error: (d && d.message) || '加载失败' })
         return
       }
+      // 防御：万一服务端返回的是旧版规则结构（云函数没重新部署），
+      // 用本地默认值兜底，别让页面变成空白
+      var cfg = d.config && d.config.sleep && d.config.monthly ? d.config : rules.DEFAULTS
+
       self.setData({
         ready: true,
         error: '',
-        cfg: JSON.parse(JSON.stringify(d.config || rules.DEFAULTS))
+        cfg: JSON.parse(JSON.stringify(cfg))
       })
     })
   },

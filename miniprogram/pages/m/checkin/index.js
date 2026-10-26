@@ -46,6 +46,7 @@ Page({
     misses: [],
     ruleLines: [],
     tierNote: '',
+    showMenu: false,
     items: [],
     clock: '',
     float: '',
@@ -225,19 +226,35 @@ Page({
     }, 1800)
   },
 
-  // 右上角 ⋯ 菜单
+  // 右上角 ⋯ 菜单（自绘，不依赖 wx.showActionSheet）
   openMenu: function () {
+    this.setData({ showMenu: true })
+  },
+
+  closeMenu: function () {
+    this.setData({ showMenu: false })
+  },
+
+  gotoRules: function (e) {
+    var mode = e.currentTarget.dataset.mode
     var self = this
-    wx.showActionSheet({
-      itemList: ['查看打卡规则明细', '修改打卡规则'],
-      success: function (res) {
-        if (res.tapIndex === 0) {
-          wx.navigateTo({ url: '/pages/m/checkin/rules/index' })
-        } else if (res.tapIndex === 1) {
-          wx.navigateTo({ url: '/pages/m/checkin/rules/index?mode=edit' })
-        }
+    this.setData({ showMenu: false })
+
+    var url = '/pages/m/checkin/rules/index'
+    if (mode === 'edit') url += '?mode=edit'
+
+    wx.navigateTo({
+      url: url,
+      fail: function (err) {
+        console.error('[打开规则页失败]', err)
+        wx.showModal({
+          title: '打不开规则页',
+          content: '可能是小程序版本太旧，试试重启小程序；还不行就把这行发我：' + JSON.stringify(err),
+          showCancel: false
+        })
       }
     })
+    void self
   },
 
   // 缺卡申诉

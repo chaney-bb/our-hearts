@@ -73,15 +73,103 @@
 
 .more {
   margin-left: 16rpx;
-  width: 56rpx;
-  height: 56rpx;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
   background: #FFF0F3;
   color: #FF6B81;
-  font-size: 32rpx;
-  line-height: 50rpx;
+  font-size: 34rpx;
+  line-height: 66rpx;
   text-align: center;
   font-weight: 700;
+}
+
+/* ================= 右上角菜单（自绘底部弹层） ================= */
+.sheet-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(58, 42, 40, 0.42);
+  z-index: 200;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  background: #FFF7F3;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 20rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -8rpx 40rpx rgba(58, 42, 40, 0.16);
+  animation: sheetUp 0.18s ease-out;
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(40rpx);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sheet-title {
+  text-align: center;
+  font-size: 22rpx;
+  color: #B9A5A0;
+  padding: 12rpx 0 18rpx;
+}
+
+.sheet-item {
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 26rpx 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.sheet-item:active {
+  background: #FFF0F3;
+}
+
+.sheet-emoji {
+  font-size: 36rpx;
+  margin-right: 18rpx;
+}
+
+.sheet-main {
+  flex: 1;
+}
+
+.sheet-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3A2A28;
+}
+
+.sheet-desc {
+  display: block;
+  font-size: 21rpx;
+  color: #A08B87;
+  margin-top: 4rpx;
+}
+
+.sheet-cancel {
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #6B5754;
+  background: #FFFFFF;
+  border-radius: 24rpx;
 }
 
 /* 缺卡提示 */
