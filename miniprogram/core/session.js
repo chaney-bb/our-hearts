@@ -1,16 +1,36 @@
 /**
  * 内核 · 前端会话
  *
- * 页面要"我是谁、和谁一对、邀请码多少"，都走这里，不要去拼 action 字符串。
+ * 页面要"我是谁、和谁一对、双方爱心多少"，都走这里，不要自己拼 action 字符串。
  */
 var api = require('./api.js')
 
-function get() {
-  return api.call('session.get')
-}
+module.exports = {
+  get: function () {
+    return api.call('session.get')
+  },
 
-function bind(inviteCode) {
-  return api.call('session.bind', { inviteCode: inviteCode })
-}
+  // 首次登记（6 项）
+  register: function (data) {
+    return api.call('session.register', { data: data })
+  },
 
-module.exports = { get: get, bind: bind }
+  // 任何时候改资料（userId 改了服务端会重新查重）
+  updateProfile: function (data) {
+    return api.call('session.updateProfile', { data: data })
+  },
+
+  bind: function (inviteCode) {
+    return api.call('session.bind', { inviteCode: inviteCode })
+  },
+
+  // 解绑：页面必须先弹两次确认，到这里 confirm 一定传 true
+  unbind: function () {
+    return api.call('session.unbind', { confirm: true })
+  },
+
+  // 自检：钱包余额 vs 流水之和
+  verify: function () {
+    return api.call('session.verify')
+  }
+}

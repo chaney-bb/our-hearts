@@ -9,6 +9,8 @@ Page({
     ready: false,
     navTop: 24,
     mode: 'mock',
+    needRegister: false,
+    needPair: false,
     home: null,
     items: [],
     clock: '',
@@ -44,50 +46,92 @@ Page({
     })
   },
 
-  // 首页数据 = 内核的"我是谁" + 打卡模块的"今天怎么样"
-  // 两个请求并行发出，加新功能时首页会变成更多个 summary 并行，不用改结构
+  /**
+   * 首页数据 = 内核会话（我是谁 / 双方余额）+ 打卡模块（今天怎么样）
+   * 加新功能时这里会变成多个 summary 并行，结构不用改
+   */
   load: function () {
     var self = this
 
-    return Promise.all([session.get(), checkinApi.detail()]).then(function (arr) {
-      var s = arr[0]
-      var d = arr[1]
-      var bad = !s || !s.ok ? s : !d || !d.ok ? d : null
+    return session.get().then(function (s) {
+      if (!s || !s.ok) {
+        self.fail(s)
+        return
+      }
+      self.offset = (s.serverNow || Date.now()) - Date.now()
 
-      if (bad) {
-        // 出错了也要说清楚原因，不能一直卡在"正在唤醒"
-        self.setData({
-          ready: false,
-          error: (bad && bad.message) || '加载失败，原因不明',
-          errorRaw: (bad && (bad.detail || bad.raw)) || ''
-        })
+      // 没登记：显示引导卡，不自动跳（避免用户返回又被弹进去）
+      if (s.needRegister) {
+        self.setData({ ready: false, needRegister: true, needPair: true, error: '' })
         return
       }
 
-      // 用服务器时间校准本机（防止手机时间不准）
-      self.offset = (d.serverNow || s.serverNow || Date.now()) - Date.now()
+      // 登记了但还没配对：显示邀请码卡片，打卡按钮点了会提示"先配对"
+      if (!s.bound) {
+        self.setData({
+          ready: true,
+          needRegister: false,
+          needPair: true,
+          mode: api.getMode(),
+          error: '',
+          home: {
+            me: s.me,
+            partner: null,
+            bound: false,
+            inviteCode: s.inviteCode,
+            daysTogether: s.daysTogether,
+            hearts: (s.wallet && s.wallet.balance) || 0,
+            partnerHearts: 0,
+            streak: 0,
+            today: { date: '', records: {}, fullDay: false },
+            recent: []
+          }
+        })
+        self.render()
+        self.startTick()
+        return
+      }
 
-      self.setData({
-        home: {
-          me: s.me,
-          partner: s.partner,
-          bound: s.bound,
-          inviteCode: s.inviteCode,
-          daysTogether: s.daysTogether,
-          hearts: d.hearts,
-          streak: d.streak,
-          today: d.today,
-          recent: d.recent
-        },
-        ready: true,
-        mode: api.getMode(),
-        error: '',
-        errorRaw: '',
-        rulesStale: self.checkStale(d.rules)
+      return checkinApi.detail().then(function (d) {
+        if (!d || !d.ok) {
+          self.fail(d)
+          return
+        }
+        self.offset = (d.serverNow || s.serverNow || Date.now()) - Date.now()
+
+        self.setData({
+          home: {
+            me: s.me,
+            partner: s.partner,
+            bound: true,
+            inviteCode: s.inviteCode,
+            daysTogether: s.daysTogether,
+            hearts: (s.wallet && s.wallet.balance) || 0,
+            partnerHearts: (s.partnerWallet && s.partnerWallet.balance) || 0,
+            streak: d.streak,
+            today: d.today,
+            recent: d.recent
+          },
+          ready: true,
+          needRegister: false,
+          needPair: false,
+          mode: api.getMode(),
+          error: '',
+          errorRaw: '',
+          rulesStale: self.checkStale(d.rules)
+        })
+
+        self.render()
+        self.startTick()
       })
+    })
+  },
 
-      self.render()
-      self.startTick()
+  fail: function (res) {
+    this.setData({
+      ready: false,
+      error: (res && res.message) || '加载失败，原因不明',
+      errorRaw: (res && (res.detail || res.raw)) || ''
     })
   },
 
@@ -122,6 +166,10 @@ Page({
     api.forceLocal('用户手动切换到本地模式')
     this.setData({ ready: false, error: '', errorRaw: '', mode: 'mock' })
     this.load()
+  },
+
+  gotoRegister: function () {
+    wx.navigateTo({ url: '/pages/register/register' })
   },
 
   // 每秒重算一次倒计时和按钮状态
@@ -169,6 +217,11 @@ Page({
   // 点打卡
   onCheckin: function (e) {
     var self = this
+    if (this.data.needPair) {
+      wx.showToast({ title: '先和 TA 配对才能打卡', icon: 'none' })
+      return
+    }
+
     var type = e.currentTarget.dataset.type
     var item = null
     for (var i = 0; i < this.data.items.length; i++) {
@@ -196,9 +249,22 @@ Page({
         wx.showToast({ title: (res && res.message) || '打卡失败', icon: 'none' })
         return
       }
+
       self.offset = res.serverNow - Date.now()
-      self.setData({ home: Object.assign({}, self.data.home, res.detail) })
+      self.setData({
+        home: Object.assign({}, self.data.home, res.detail),
+        rulesStale: self.checkStale(res.detail && res.detail.rules)
+      })
       self.render()
+      // 打卡只动打卡数据，余额重新问会话要（账本是内核的）
+      session.get().then(function (s) {
+        if (s && s.ok) {
+          self.setData({
+            'home.hearts': (s.wallet && s.wallet.balance) || 0,
+            'home.partnerHearts': (s.partnerWallet && s.partnerWallet.balance) || 0
+          })
+        }
+      })
 
       var r = res.reward || { delta: 0, reasons: [] }
       self.showFloat(r.delta, r.reasons)
@@ -243,6 +309,37 @@ Page({
           }
           wx.showToast({ title: '配对成功', icon: 'success' })
           self.load()
+        })
+      }
+    })
+  },
+
+  // 解绑要弹两次确认；服务端也要求 confirm: true
+  onUnbind: function () {
+    var self = this
+    wx.showModal({
+      title: '解除绑定',
+      content: '解绑后两个人都会回到"未配对"，爱心清零，打卡记录封存（不会删）。确定吗？',
+      confirmText: '继续',
+      confirmColor: '#FF5C77',
+      success: function (res) {
+        if (!res.confirm) return
+        wx.showModal({
+          title: '再确认一次',
+          content: '这个操作不可撤销。真的很确定吗？',
+          confirmText: '确定解绑',
+          confirmColor: '#FF5C77',
+          success: function (r2) {
+            if (!r2.confirm) return
+            session.unbind().then(function (r) {
+              if (!r || !r.ok) {
+                wx.showToast({ title: (r && r.message) || '解绑失败', icon: 'none' })
+                return
+              }
+              wx.showToast({ title: '已解绑', icon: 'success' })
+              self.load()
+            })
+          }
         })
       }
     })

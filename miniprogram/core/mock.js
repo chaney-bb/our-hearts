@@ -5,15 +5,15 @@
  * 数据存在 wx.storage，只在这台手机上，**不联网、不和对象同步**。
  *
  * 它模拟的是云函数的返回格式，所以接口名和云端一致：
- *   session.get / session.bind / checkin.summary / checkin.detail / checkin.act / checkin.history
- * 真要用的时候把 utils/config.js 里的 envId 填上，就自动切到云开发。
+ *   session.get / session.register / session.updateProfile / session.bind / session.unbind
+ *   checkin.summary / checkin.detail / checkin.act / checkin.history
  *
- * ⚠️ 爱心目前是"情侣共享一个池子"，和云端 P1a 阶段保持一致；
- *    P1b 改成个人钱包时，两处一起改（这也是为什么只有一处写余额）。
+ * 为了让你在本地也能点完整流程，这里默认"已经登记 + 已经配对"，
+ * 对象是一个假的「亲爱的」。解绑后可以用任意 6 位邀请码再假装配对。
  */
 var rules = require('../utils/rules.js')
 
-var STORAGE_KEY = 'our-hearts-mock-v2'
+var STORAGE_KEY = 'our-hearts-mock-v3'
 
 function now() {
   return Date.now()
@@ -21,9 +21,18 @@ function now() {
 
 function seed() {
   return {
-    profile: { nickname: '小可爱', avatarEmoji: '🐰' },
-    partner: null,
-    couple: { inviteCode: 'LOVE88', hearts: 0, createdAt: now() },
+    profile: {
+      userId: '小可爱',
+      realName: '',
+      phone: '',
+      birthday: '',
+      gender: '',
+      bio: '',
+      avatarEmoji: '🐰'
+    },
+    partner: { userId: '亲爱的', avatarEmoji: '🐻' },
+    couple: { inviteCode: 'LOVE88', createdAt: now(), status: 'active', pairedAt: now() },
+    wallet: { mine: 0, partner: 86 },
     checkins: {},
     logs: []
   }
@@ -34,7 +43,7 @@ function load() {
   try {
     s = wx.getStorageSync(STORAGE_KEY)
   } catch (e) {}
-  if (!s || typeof s !== 'object' || !s.couple) {
+  if (!s || typeof s !== 'object' || !s.couple || !s.wallet) {
     s = seed()
     save(s)
   }
@@ -66,24 +75,78 @@ function fullDayKeysOf(s) {
   return keys
 }
 
-/* ------------------------------ 各接口 ------------------------------ */
+function publicProfile(p) {
+  if (!p) return null
+  return {
+    userId: p.userId || '',
+    displayName: p.userId || '未命名',
+    realName: p.realName || '',
+    phone: p.phone || '',
+    birthday: p.birthday || '',
+    gender: p.gender || '',
+    bio: p.bio || '',
+    avatarEmoji: p.avatarEmoji || '🙂'
+  }
+}
+
+/* ------------------------------ 会话 ------------------------------ */
 
 function sessionGet(s) {
+  var bound = !!s.partner && s.couple.status === 'active'
   return ok({
-    me: { nickname: s.profile.nickname, avatarEmoji: s.profile.avatarEmoji },
-    partner: s.partner,
-    bound: !!s.partner,
+    needRegister: false,
+    needPair: !bound,
+    bound: bound,
+    coupleStatus: s.couple.status,
+    me: publicProfile(s.profile),
+    partner: bound ? publicProfile(s.partner) : null,
     inviteCode: s.couple.inviteCode,
-    daysTogether: Math.floor((now() - s.couple.createdAt) / 86400000) + 1
+    daysTogether: Math.floor((now() - (s.couple.pairedAt || s.couple.createdAt)) / 86400000) + 1,
+    wallet: { balance: s.wallet.mine },
+    partnerWallet: { balance: bound ? s.wallet.partner : 0 }
   })
 }
+
+function sessionRegister(s, data) {
+  var d = data || {}
+  var keys = ['userId', 'realName', 'phone', 'birthday', 'gender', 'bio', 'avatarEmoji']
+  keys.forEach(function (k) {
+    if (d[k] !== undefined) s.profile[k] = d[k]
+  })
+  save(s)
+  return sessionGet(s)
+}
+
+function sessionBind(s, inviteCode) {
+  if (!inviteCode || String(inviteCode).length !== 6) return biz('NOT_FOUND', '邀请码是 6 位哦')
+  if (s.partner && s.couple.status === 'active') return biz('FULL', '已经配对过了')
+  s.partner = { userId: '亲爱的', avatarEmoji: '🐻' }
+  s.couple.status = 'active'
+  s.couple.pairedAt = now()
+  save(s)
+  return sessionGet(s)
+}
+
+function sessionUnbind(s, confirm) {
+  if (confirm !== true) return biz('NO_CONFIRM', '解绑需要二次确认')
+  if (!s.partner) return biz('NOT_PAIRED', '当前没有可以解绑的关系')
+
+  s.wallet.mine = 0
+  s.partner = null
+  s.couple.status = 'pending'
+  s.couple.inviteCode = 'LOVE' + String(Math.floor(Math.random() * 90) + 10)
+  s.couple.pairedAt = null
+  save(s)
+  return sessionGet(s)
+}
+
+/* ------------------------------ 打卡 ------------------------------ */
 
 function checkinDetail(s) {
   var ms = now()
   var todayKey = rules.dateKey(ms)
   var records = s.checkins[todayKey] || {}
   var fullDayKeys = fullDayKeysOf(s)
-  var keys = []
   var recent = []
 
   for (var i = 6; i >= 0; i--) {
@@ -93,7 +156,6 @@ function checkinDetail(s) {
   }
 
   return ok({
-    hearts: s.couple.hearts,
     streak: rules.calcStreak(fullDayKeys, todayKey),
     today: { date: todayKey, records: records, fullDay: !!(records.sleep && records.wake) },
     recent: recent,
@@ -102,6 +164,8 @@ function checkinDetail(s) {
 }
 
 function checkinAct(s, type) {
+  if (!s.partner) return biz('NOT_PAIRED', '先和 TA 配对才能打卡')
+
   var ms = now()
   var w = rules.RULES.windows[type]
   if (!w) return biz('BAD_TYPE', '没有这个打卡项')
@@ -127,7 +191,7 @@ function checkinAct(s, type) {
   var awards = rules.checkinAwards({
     type: type,
     isFullDay: isFullDay,
-    partnerDone: false, // 本地模式没有对象，同步奖不生效
+    partnerDone: false, // 本地模式没有真的对象，同步奖不生效
     streakAfter: streakAfter
   })
 
@@ -139,14 +203,11 @@ function checkinAct(s, type) {
     s.logs.unshift({ at: ms, date: todayKey, delta: awards[i].delta, reason: awards[i].reason })
   }
   s.logs = s.logs.slice(0, 100)
-  s.couple.hearts += total
+  s.wallet.mine += total
   save(s)
 
   var d = checkinDetail(s)
-  delete d.ok
-  delete d.mode
-  delete d.serverNow
-  return ok({ reward: { delta: total, reasons: reasons }, detail: d })
+  return ok({ reward: { delta: total, reasons: reasons }, detail: { streak: d.streak, today: d.today, recent: d.recent, rules: d.rules } })
 }
 
 function bestStreakOf(keys) {
@@ -179,9 +240,11 @@ function checkinHistory(s, month) {
     if (r.sleep && r.wake) fullKeys.push(k)
   }
 
-  var logs = s.logs.filter(function (l) {
-    return String(l.date).indexOf(month) === 0
-  }).slice(0, 30)
+  var logs = s.logs
+    .filter(function (l) {
+      return String(l.date).indexOf(month) === 0
+    })
+    .slice(0, 30)
 
   return ok({
     month: month,
@@ -189,7 +252,7 @@ function checkinHistory(s, month) {
     stats: { fullCount: fullKeys.length, bestStreak: bestStreakOf(fullKeys) },
     logs: logs,
     warn: '',
-    hearts: s.couple.hearts
+    hearts: s.wallet.mine
   })
 }
 
@@ -200,8 +263,7 @@ function checkinSummary(s) {
   return ok({
     todayDone: (records.sleep ? 1 : 0) + (records.wake ? 1 : 0),
     todayTotal: rules.RULES.types.length,
-    streak: rules.calcStreak(fullDayKeysOf(s), todayKey),
-    hearts: s.couple.hearts
+    streak: rules.calcStreak(fullDayKeysOf(s), todayKey)
   })
 }
 
@@ -215,10 +277,20 @@ function call(action, data) {
     case 'session.get':
       return Promise.resolve(sessionGet(s))
 
+    case 'session.register':
+      return Promise.resolve(sessionRegister(s, data.data || data))
+
+    case 'session.updateProfile':
+      return Promise.resolve(sessionRegister(s, data.data || data))
+
     case 'session.bind':
-      return Promise.resolve(
-        biz('MOCK', '本地预览模式不能真的配对，先把云开发配上再用～')
-      )
+      return Promise.resolve(sessionBind(s, data.inviteCode))
+
+    case 'session.unbind':
+      return Promise.resolve(sessionUnbind(s, data.confirm))
+
+    case 'session.verify':
+      return Promise.resolve(ok({ wallet: s.wallet.mine, ledger: s.wallet.mine, ok: true }))
 
     case 'checkin.summary':
       return Promise.resolve(checkinSummary(s))

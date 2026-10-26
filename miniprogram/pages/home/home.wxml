@@ -1,6 +1,16 @@
 <view class="page">
 
-  <view class="loading" wx:if="{{!ready && !error}}">正在唤醒我们的爱心…</view>
+  <view class="loading" wx:if="{{!ready && !error && !needRegister}}">正在唤醒我们的爱心…</view>
+
+  <!-- 还没登记：挡在门口 -->
+  <view class="gate-wrap" wx:if="{{needRegister}}">
+    <view class="gate-card">
+      <view class="gate-emoji">📝</view>
+      <view class="gate-title">先互相认识一下</view>
+      <view class="gate-desc">填一下你们的基本信息（只有你们两个人能看到），之后就能一起打卡了</view>
+      <view class="btn gate-btn" bindtap="gotoRegister">去登记</view>
+    </view>
+  </view>
 
   <!-- 云开发没接通时，把原因摊开说，别让人对着白屏猜 -->
   <view class="err-wrap" wx:if="{{error}}">
@@ -35,7 +45,13 @@
     <view class="hearts-row">
       <text class="heart-ico">❤️</text>
       <text class="heart-num">{{home.hearts}}</text>
-      <text class="heart-unit">爱心</text>
+      <text class="heart-unit">我的爱心</text>
+    </view>
+
+    <view class="partner-hearts" wx:if="{{home.bound}}">
+      <text class="ph-emoji">{{home.partner.avatarEmoji}}</text>
+      <text class="ph-name">{{home.partner.displayName}}</text>
+      <text class="ph-num">💗 {{home.partnerHearts}}</text>
     </view>
 
     <view class="streak-row">
@@ -90,10 +106,13 @@
     <view class="card partner-card" wx:if="{{home.bound}}">
       <view class="partner-av">{{home.partner.avatarEmoji}}</view>
       <view class="partner-main">
-        <view class="partner-name">{{home.partner.nickname}}</view>
+        <view class="partner-name">{{home.partner.displayName}}</view>
         <view class="partner-sub">今天也和你一起坚持 ❤️</view>
       </view>
-      <view class="partner-tag">已配对</view>
+      <view class="partner-right">
+        <view class="partner-tag">已配对</view>
+        <view class="unbind" bindtap="onUnbind">解除绑定</view>
+      </view>
     </view>
 
     <!-- ============ 最近 7 天 ============ -->

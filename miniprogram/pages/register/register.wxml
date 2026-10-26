@@ -1,0 +1,104 @@
+<view class="page">
+
+  <view class="topbar" style="padding-top:{{navTop}}px">
+    <view class="title">先互相认识一下</view>
+    <view class="sub">这些信息只有你们两个人能看到</view>
+  </view>
+
+  <view class="body">
+
+    <view class="card">
+      <view class="field">
+        <view class="label">头像</view>
+        <view class="emoji-row">
+          <view
+            class="emoji {{item === form.avatarEmoji ? 'on' : ''}}"
+            wx:for="{{emojis}}"
+            wx:key="*this"
+            data-emoji="{{item}}"
+            bindtap="pickEmoji"
+          >{{item}}</view>
+        </view>
+      </view>
+
+      <view class="field">
+        <view class="label">用户 ID<text class="req">*</text></view>
+        <input
+          class="input"
+          placeholder="互相称呼用的名字，2~12 字"
+          maxlength="12"
+          value="{{form.userId}}"
+          data-key="userId"
+          bindinput="onInput"
+        />
+      </view>
+
+      <view class="field">
+        <view class="label">真实姓名<text class="req">*</text></view>
+        <input
+          class="input"
+          placeholder="只有 TA 能看到"
+          maxlength="20"
+          value="{{form.realName}}"
+          data-key="realName"
+          bindinput="onInput"
+        />
+      </view>
+
+      <view class="field">
+        <view class="label">手机号<text class="req">*</text></view>
+        <input
+          class="input"
+          type="number"
+          placeholder="11 位手机号"
+          maxlength="11"
+          value="{{form.phone}}"
+          data-key="phone"
+          bindinput="onInput"
+        />
+      </view>
+
+      <view class="field">
+        <view class="label">生日<text class="req">*</text></view>
+        <picker mode="date" value="{{form.birthday}}" end="{{today}}" bindchange="pickBirthday">
+          <view class="picker">{{form.birthday || '选一下日期'}}</view>
+        </picker>
+      </view>
+
+      <view class="field">
+        <view class="label">性别<text class="req">*</text></view>
+        <view class="gender-row">
+          <view
+            class="gender {{item.value === form.gender ? 'on' : ''}}"
+            wx:for="{{genders}}"
+            wx:key="value"
+            data-value="{{item.value}}"
+            bindtap="pickGender"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <view class="field">
+        <view class="label">自我介绍</view>
+        <textarea
+          class="textarea"
+          placeholder="随便写点什么（选填）"
+          maxlength="100"
+          value="{{form.bio}}"
+          data-key="bio"
+          bindinput="onInput"
+        />
+      </view>
+    </view>
+
+    <view class="err" wx:if="{{error}}">{{error}}</view>
+
+    <view class="btn submit {{submitting ? 'is-disabled' : ''}}" bindtap="submit">
+      {{submitting ? '提交中…' : '登记完成'}}
+    </view>
+
+    <view class="note">登记完就能生成邀请码，让 TA 扫一下/输一下就配上了。</view>
+
+    <view class="safe-bottom"></view>
+  </view>
+</view>

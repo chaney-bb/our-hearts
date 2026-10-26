@@ -2,7 +2,7 @@
  * 云函数入口：只有路由，没有任何业务
  *
  * 接口命名：<模块key>.<动作>   例如 checkin.act、checkin.detail
- * 系统动作：session.get、session.bind（由内核直接提供，不经过模块）
+ * 系统动作：session.*（由内核直接提供，不经过模块）
  *
  * 部署方法：微信开发者工具里右键 cloudfunctions/api → 上传并部署（云端安装依赖）
  */
@@ -10,10 +10,58 @@ const { cloud } = require('./core/db.js')
 const registry = require('./core/registry.js')
 const context = require('./core/context.js')
 const identity = require('./core/identity.js')
+const session = require('./core/session.js')
+const hearts = require('./core/hearts.js')
 const respond = require('./core/respond.js')
 
 // 旧版客户端用的接口名（重构前是 home / checkin / history / joinCouple）
 const LEGACY = { home: 1, checkin: 1, history: 1, joinCouple: 1 }
+
+/* ------------------------------ 系统动作 ------------------------------ */
+
+async function runSystem(action, payload, openid) {
+  if (action === 'session.get') return session.get(openid)
+
+  if (action === 'session.register') {
+    await identity.register(openid, payload.data || payload)
+    return session.get(openid)
+  }
+
+  if (action === 'session.updateProfile') {
+    await identity.updateProfile(openid, payload.data || payload)
+    return session.get(openid)
+  }
+
+  if (action === 'session.bind') {
+    const code = String(payload.inviteCode || '').trim().toUpperCase()
+    await identity.joinCouple(openid, code)
+    return session.get(openid)
+  }
+
+  if (action === 'session.unbind') {
+    await session.unbind(openid, payload.confirm === true)
+    return session.get(openid)
+  }
+
+  // 自检：钱包余额 vs 流水之和（只查自己，随手可点）
+  if (action === 'session.verify') {
+    const profile = await identity.getProfile(openid)
+    return hearts.verify(openid, profile.coupleId)
+  }
+
+  return null
+}
+
+const SYSTEM = {
+  'session.get': 1,
+  'session.register': 1,
+  'session.updateProfile': 1,
+  'session.bind': 1,
+  'session.unbind': 1,
+  'session.verify': 1
+}
+
+/* ------------------------------ 入口 ------------------------------ */
 
 exports.main = async (event) => {
   const action = String((event && event.action) || '')
@@ -34,16 +82,10 @@ exports.main = async (event) => {
   }
 
   try {
-    // ---------- 系统动作（内核直接提供）----------
-    if (action === 'session.get') {
-      return respond.ok(await identity.session(openid))
-    }
-
-    if (action === 'session.bind') {
-      const code = String(payload.inviteCode || '').trim().toUpperCase()
-      const r = await identity.joinCouple(openid, code)
-      if (!r.ok) return respond.fail(r.code, r.message)
-      return respond.ok(await identity.session(openid))
+    // ---------- 系统动作 ----------
+    if (SYSTEM[action]) {
+      const data = await runSystem(action, payload, openid)
+      return respond.ok(data)
     }
 
     // ---------- 模块动作：checkin.act ----------
@@ -68,6 +110,11 @@ exports.main = async (event) => {
 
     return respond.ok(result)
   } catch (err) {
+    // 内核用 bizError 表达业务失败（没登记 / 没配对 / 爱心不够…）
+    if (err && err.biz) {
+      return respond.fail(err.code, err.message)
+    }
+
     console.error('[api 出错]', action, err)
     const detail = String((err && (err.errMsg || err.message)) || err)
     return respond.fail('ERROR', '云函数执行出错（' + action + '）', detail)

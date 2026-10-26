@@ -1,0 +1,154 @@
+.topbar {
+  padding: 0 40rpx 30rpx;
+  background: linear-gradient(180deg, #FFEDF0 0%, #FFF7F3 100%);
+}
+
+.title {
+  font-size: 42rpx;
+  font-weight: 700;
+}
+
+.sub {
+  font-size: 24rpx;
+  color: #A08B87;
+  margin-top: 8rpx;
+}
+
+.body {
+  padding: 0 32rpx;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 12rpx 30rpx 30rpx;
+  box-shadow: 0 8rpx 30rpx rgba(255, 107, 129, 0.08);
+}
+
+.field {
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid #FDF4F1;
+}
+
+.field:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3A2A28;
+  margin-bottom: 14rpx;
+}
+
+.req {
+  color: #FF6B81;
+  margin-left: 6rpx;
+}
+
+.input {
+  height: 76rpx;
+  padding: 0 24rpx;
+  background: #FBF3F1;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+}
+
+.textarea {
+  width: 100%;
+  height: 140rpx;
+  padding: 18rpx 24rpx;
+  background: #FBF3F1;
+  border-radius: 18rpx;
+  font-size: 27rpx;
+  box-sizing: border-box;
+}
+
+.picker {
+  height: 76rpx;
+  line-height: 76rpx;
+  padding: 0 24rpx;
+  background: #FBF3F1;
+  border-radius: 18rpx;
+  font-size: 28rpx;
+  color: #3A2A28;
+}
+
+.emoji-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.emoji {
+  width: 88rpx;
+  height: 88rpx;
+  margin: 0 16rpx 16rpx 0;
+  border-radius: 24rpx;
+  background: #FBF3F1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  border: 3rpx solid transparent;
+}
+
+.emoji.on {
+  background: #FFE8EC;
+  border-color: #FF6B81;
+}
+
+.gender-row {
+  display: flex;
+}
+
+.gender {
+  flex: 1;
+  height: 76rpx;
+  line-height: 76rpx;
+  text-align: center;
+  margin-right: 18rpx;
+  border-radius: 18rpx;
+  background: #FBF3F1;
+  font-size: 27rpx;
+  color: #6B5754;
+}
+
+.gender:last-child {
+  margin-right: 0;
+}
+
+.gender.on {
+  background: #FFE8EC;
+  color: #FF5C77;
+  font-weight: 600;
+}
+
+.err {
+  margin-top: 22rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 20rpx;
+  background: #FFF1F3;
+  border: 2rpx solid #FFD3DA;
+  font-size: 23rpx;
+  color: #C25A6E;
+  line-height: 1.6;
+}
+
+.btn.submit {
+  margin-top: 34rpx;
+  height: 92rpx;
+  font-size: 31rpx;
+  border-radius: 999rpx;
+}
+
+.btn.submit.is-disabled {
+  opacity: 0.6;
+}
+
+.note {
+  margin-top: 22rpx;
+  text-align: center;
+  font-size: 22rpx;
+  color: #B9A5A0;
+  line-height: 1.6;
+}

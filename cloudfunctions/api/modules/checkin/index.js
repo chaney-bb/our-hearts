@@ -44,20 +44,19 @@ async function summary(ctx) {
   return {
     todayDone: (records.sleep ? 1 : 0) + (records.wake ? 1 : 0),
     todayTotal: rules.RULES.types.length,
-    streak: rules.calcStreak(fullDayKeys, ctx.dateKey),
-    hearts: await ctx.balance()
+    streak: rules.calcStreak(fullDayKeys, ctx.dateKey)
   }
 }
 
 /**
  * 模块自己的页面用：返回这一页要的全部数据
+ * 注意：爱心余额不属于打卡模块，由 session.get 提供（账本是内核的）
  */
 async function detail(ctx) {
   const records = await todayRecords(ctx)
   const r = await recentDays(ctx)
 
   return {
-    hearts: await ctx.balance(),
     streak: rules.calcStreak(r.fullDayKeys, ctx.dateKey),
     today: {
       date: ctx.dateKey,

@@ -1,7 +1,8 @@
 {
   "pages": [
     "pages/home/home",
-    "pages/history/history"
+    "pages/history/history",
+    "pages/register/register"
   ],
   "window": {
     "navigationStyle": "custom",

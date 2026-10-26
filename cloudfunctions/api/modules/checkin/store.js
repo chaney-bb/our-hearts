@@ -3,6 +3,10 @@
  *
  * 只操作 checkins 这一个集合（在 index.js 的 collections 里声明过）。
  * 集合访问一律走 ctx.db，内核会拦住越权访问。
+ *
+ * ⚠️ 所有查询都必须带 coupleId：
+ *    连续天数、全勤统计都属于"这段关系"。
+ *    否则会和 A 连续 30 天、解绑、和 B 配对，天数会被继承过去。
  */
 const { _, COL } = require('../../core/db.js')
 const clock = require('../../core/clock.js')
@@ -11,7 +15,10 @@ const COLL = COL.checkins
 
 /** 某天我的打卡记录 -> { sleep: { at }, wake: { at } } */
 async function getRecords(ctx, dateKey) {
-  const res = await ctx.db.collection(COLL).where({ openid: ctx.openid, date: dateKey }).get()
+  const res = await ctx.db
+    .collection(COLL)
+    .where({ openid: ctx.openid, coupleId: ctx.coupleId, date: dateKey })
+    .get()
   const records = {}
   res.data.forEach(function (d) {
     records[d.type] = { at: d.at }
@@ -19,9 +26,12 @@ async function getRecords(ctx, dateKey) {
   return records
 }
 
-/** 某天我某个类型打过没 */
+/** 某天某人某个类型打过没 */
 async function countType(ctx, openid, dateKey, type) {
-  const res = await ctx.db.collection(COLL).where({ openid: openid, date: dateKey, type: type }).count()
+  const res = await ctx.db
+    .collection(COLL)
+    .where({ openid: openid, coupleId: ctx.coupleId, date: dateKey, type: type })
+    .count()
   return res.total
 }
 
@@ -43,7 +53,7 @@ async function getFullDayKeys(ctx, todayKey, lookbackDays) {
   const start = clock.shiftKey(todayKey, -(lookbackDays - 1))
   const res = await ctx.db
     .collection(COLL)
-    .where({ openid: ctx.openid, date: _.gte(start).and(_.lte(todayKey)) })
+    .where({ openid: ctx.openid, coupleId: ctx.coupleId, date: _.gte(start).and(_.lte(todayKey)) })
     .limit(500)
     .get()
 
@@ -62,7 +72,11 @@ async function getFullDayKeys(ctx, todayKey, lookbackDays) {
 async function getMonth(ctx, month) {
   const res = await ctx.db
     .collection(COLL)
-    .where({ openid: ctx.openid, date: _.gte(month + '-01').and(_.lte(month + '-31')) })
+    .where({
+      openid: ctx.openid,
+      coupleId: ctx.coupleId,
+      date: _.gte(month + '-01').and(_.lte(month + '-31'))
+    })
     .limit(500)
     .get()
 

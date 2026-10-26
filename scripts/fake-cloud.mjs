@@ -58,6 +58,16 @@ class DocRef {
     return Promise.resolve({ stats: { updated: 1 } })
   }
 
+  // 云开发的 doc(id).set 是"不存在就创建"，钱包用 _id = openid 靠它
+  set({ data }) {
+    const docs = this.db._read(this.name)
+    const i = docs.findIndex((d) => d._id === this.id)
+    const doc = Object.assign({}, data, { _id: this.id })
+    if (i >= 0) docs[i] = doc
+    else docs.push(doc)
+    return Promise.resolve({ stats: { updated: 1 } })
+  }
+
   remove() {
     const docs = this.db._read(this.name)
     const i = docs.findIndex((d) => d._id === this.id)

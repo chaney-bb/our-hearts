@@ -14,7 +14,8 @@ const _ = db.command
 
 const COL = {
   profiles: 'profiles', // 内核：用户登记信息
-  couples: 'couples', // 内核：情侣关系 +（暂时）共享爱心余额
+  couples: 'couples', // 内核：一段关系（pending / active / dissolved）
+  wallets: 'core_wallets', // 内核：个人爱心钱包（_id = openid）
   hearts: 'heart_logs', // 内核：爱心流水
   settings: 'core_settings', // 内核：各模块的规则覆盖（P3 才用）
   checkins: 'checkins' // 打卡模块：打卡记录（模块自己声明）

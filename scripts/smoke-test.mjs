@@ -103,9 +103,14 @@ ok('早睡1 + 全勤1 + 同步1 + 连续7天10 = 13', total === 13, awards)
 console.log('\n[4] 本地模式完整流程')
 
 setNow(bj(2026, 10, 26, 22, 5))
+async function wallet() {
+  const s = await mock.call('session.get', {})
+  return s.wallet.balance
+}
+
 const r1 = await mock.call('checkin.act', { type: 'sleep' })
 ok('22:05 早睡打卡成功', r1.ok === true && r1.reward.delta === 1, r1)
-ok('爱心变成 1', r1.detail.hearts === 1, r1.detail.hearts)
+ok('爱心变成 1', (await wallet()) === 1, await wallet())
 
 const r2 = await mock.call('checkin.act', { type: 'sleep' })
 ok('重复打卡被拦住', r2.ok === false && r2.code === 'DUP', r2)
@@ -116,7 +121,7 @@ ok('22:05 打早起卡被拦住', r3.ok === false && r3.code === 'CLOSED', r3)
 setNow(bj(2026, 10, 27, 6, 20))
 const r4 = await mock.call('checkin.act', { type: 'wake' })
 ok('第二天 06:20 早起成功 +1', r4.ok === true && r4.reward.delta === 1, r4)
-ok('爱心变成 2', r4.detail.hearts === 2, r4.detail.hearts)
+ok('爱心变成 2', (await wallet()) === 2, await wallet())
 
 setNow(bj(2026, 10, 27, 22, 30))
 const r5 = await mock.call('checkin.act', { type: 'sleep' })

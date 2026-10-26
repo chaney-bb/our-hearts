@@ -117,6 +117,33 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 对方余额（可见不可动） */
+.partner-hearts {
+  display: flex;
+  align-items: center;
+  margin-top: 18rpx;
+  position: relative;
+  z-index: 1;
+  font-size: 24rpx;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999rpx;
+  padding: 10rpx 22rpx 10rpx 12rpx;
+}
+
+.ph-emoji {
+  font-size: 30rpx;
+  margin-right: 8rpx;
+}
+
+.ph-name {
+  margin-right: 14rpx;
+  opacity: 0.9;
+}
+
+.ph-num {
+  font-weight: 600;
+}
+
 /* ================= 内容区 ================= */
 .body {
   padding: 8rpx 32rpx 0;
@@ -332,6 +359,19 @@
   background: #EAF7F2;
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
+  text-align: center;
+}
+
+.partner-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.unbind {
+  margin-top: 12rpx;
+  font-size: 21rpx;
+  color: #C9B8B4;
 }
 
 /* ================= 最近 7 天 ================= */
@@ -539,4 +579,40 @@
   font-size: 22rpx;
   color: #B9A5A0;
   line-height: 1.7;
+}
+
+/* ================= 未登记引导 ================= */
+.gate-wrap {
+  padding: 180rpx 44rpx 0;
+}
+
+.gate-card {
+  background: #FFFFFF;
+  border-radius: 36rpx;
+  padding: 56rpx 44rpx;
+  text-align: center;
+  box-shadow: 0 16rpx 50rpx rgba(255, 107, 129, 0.14);
+}
+
+.gate-emoji {
+  font-size: 84rpx;
+  line-height: 1;
+}
+
+.gate-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  margin-top: 28rpx;
+}
+
+.gate-desc {
+  font-size: 25rpx;
+  color: #A08B87;
+  line-height: 1.7;
+  margin-top: 16rpx;
+}
+
+.gate-btn {
+  margin-top: 40rpx;
+  height: 88rpx;
 }
