@@ -1,0 +1,32 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/history/history"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#FFF7F3",
+    "backgroundColorTop": "#FFF7F3",
+    "backgroundColorBottom": "#FFF7F3",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#B9A5A0",
+    "selectedColor": "#FF6B81",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "打卡"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "记录"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

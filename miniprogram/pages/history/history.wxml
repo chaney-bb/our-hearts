@@ -1,0 +1,78 @@
+<view class="page">
+
+  <view class="topbar" style="padding-top:{{navTop}}px">
+    <view class="topbar-title">我们的记录</view>
+    <view class="topbar-sub">{{monthLabel}}</view>
+  </view>
+
+  <view class="body">
+
+    <!-- 本月概况 -->
+    <view class="stat-row">
+      <view class="stat-card">
+        <view class="stat-num">{{stats.fullCount}}</view>
+        <view class="stat-label">本月全勤</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-num">{{stats.bestStreak}}</view>
+        <view class="stat-label">最长连续</view>
+      </view>
+      <view class="stat-card">
+        <view class="stat-num heart">{{hearts}}</view>
+        <view class="stat-label">爱心余额</view>
+      </view>
+    </view>
+
+    <!-- 日历 -->
+    <view class="card cal-card">
+      <view class="cal-head">
+        <view class="cal-nav" bindtap="prevMonth">‹</view>
+        <view class="cal-title">{{monthLabel}}</view>
+        <view class="cal-nav {{canNext ? '' : 'is-off'}}" bindtap="nextMonth">›</view>
+      </view>
+
+      <view class="cal-week">
+        <view class="cal-week-cell" wx:for="{{weekdays}}" wx:key="*this">{{item}}</view>
+      </view>
+
+      <view class="cal-grid">
+        <view class="cal-cell" wx:for="{{cells}}" wx:key="id">
+          <block wx:if="{{!item.blank}}">
+            <view class="cell-day {{item.isToday ? 'is-today' : ''}} {{item.full ? 'is-full' : ''}}">{{item.day}}</view>
+            <view class="cell-dots">
+              <view class="dot {{item.sleep ? 'sleep on' : 'sleep'}}"></view>
+              <view class="dot {{item.wake ? 'wake on' : 'wake'}}"></view>
+            </view>
+          </block>
+        </view>
+      </view>
+
+      <view class="cal-legend">
+        <view class="legend-item"><view class="dot sleep on"></view><text>早睡</text></view>
+        <view class="legend-item"><view class="dot wake on"></view><text>早起</text></view>
+        <view class="legend-item"><view class="dot is-full-legend"></view><text>全勤</text></view>
+      </view>
+    </view>
+
+    <!-- 爱心明细 -->
+    <view class="section-head">
+      <text class="section-title">爱心明细</text>
+      <text class="tip">最近的变动</text>
+    </view>
+
+    <view class="card log-card" wx:if="{{logs.length}}">
+      <view class="log-line" wx:for="{{logs}}" wx:key="id">
+        <view class="log-main">
+          <view class="log-reason">{{item.reason}}</view>
+          <view class="log-time">{{item.date}} {{item.time}}</view>
+        </view>
+        <view class="log-delta">+{{item.delta}}</view>
+      </view>
+    </view>
+    <view class="empty" wx:else>这个月还没有爱心记录，去首页打个卡吧</view>
+
+    <view class="mock-tip" wx:if="{{mode === 'mock'}}">本地预览模式：数据只存在这台手机上</view>
+
+    <view class="safe-bottom"></view>
+  </view>
+</view>

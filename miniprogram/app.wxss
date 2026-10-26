@@ -1,0 +1,84 @@
+/* ============ 全局样式：颜色和字号都在这里定，改这一个文件就能换整体风格 ============ */
+
+page {
+  background: #FFF7F3;
+  color: #3A2A28;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+view, text {
+  box-sizing: border-box;
+}
+
+/* 通用卡片 */
+.card {
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  box-shadow: 0 8rpx 30rpx rgba(255, 107, 129, 0.08);
+}
+
+/* 通用按钮 */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 76rpx;
+  padding: 0 32rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF8FA3 0%, #FF6B81 100%);
+  box-shadow: 0 8rpx 20rpx rgba(255, 107, 129, 0.28);
+}
+
+.btn.is-disabled {
+  background: #F4E9E7;
+  color: #B9A5A0;
+  box-shadow: none;
+}
+
+.btn.is-done {
+  background: #EAF7F2;
+  color: #2FAE8B;
+  box-shadow: none;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 68rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #FF6B81;
+  background: #FFF0F3;
+}
+
+.btn-ghost.primary {
+  color: #FFFFFF;
+  background: linear-gradient(135deg, #FF8FA3 0%, #FF6B81 100%);
+}
+
+/* 空状态 / 提示 */
+.tip {
+  font-size: 24rpx;
+  color: #A08B87;
+}
+
+.empty {
+  padding: 60rpx 40rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #B9A5A0;
+}
+
+/* 底部安全区 */
+.safe-bottom {
+  height: calc(24rpx + env(safe-area-inset-bottom));
+}
