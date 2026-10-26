@@ -104,24 +104,29 @@
 **规则的唯一来源是 `shared/checkin-rules.js`**（时间工具在 `shared/clock.js`）。
 `miniprogram/utils/rules.js` 和 `cloudfunctions/api/modules/checkin/rules.js` 都是它生成的副本，**别手改**。
 
+现在的规则是**参数化**的（默认值 + 用户覆盖，覆盖值存在 `core_settings` 里）：
+
 ```js
-cutoverHour: 12,                            // 打卡日从中午 12 点切分（见下）
-windows: {
-  sleep: { start: '5:00',  end: '23:59' },  // 早睡窗口（你上次改的）
-  wake:  { start: '05:30', end: '08:00' }   // 早起窗口
+cutoverHour: 12,                 // 打卡日切分点（12 点前的打卡算前一天）
+sleep: {
+  window: { start: '21:30', end: '24:00' },
+  tiers: [                       // 按打卡时间分档给爱心
+    { from: '21:30', to: '22:15', hearts: 2 },
+    { from: '22:15', to: '23:15', hearts: 1 },
+    { from: '23:15', to: '24:00', hearts: 0 }
+  ],
+  missPenalty: 1,                // 没打卡扣 1（扣到 0 封顶）
+  allowAppeal: true,
+  appealDeadline: '12:00'
 },
-hearts: {
-  sleep: 1, wake: 1,        // 单项打卡
-  fullDay: 1,               // 当晚两项都完成
-  sync: 1,                  // 两人同一天完成同一项
-  streak7: 10, streak30: 50 // 连续里程碑
-}
+wake: { window: { start: '06:00', end: '12:00' }, tiers: [...], missPenalty: 1, ... },
+monthly: { requiredDays: 22, bonus: 10, scope: 'perUser' },
+syncBonus: 0                     // 两人同一晚完成同一项额外给多少（0 = 关闭）
 ```
 
-> **`cutoverHour` 是什么**：打卡用的是"打卡日"而不是自然日。
-> 中午 12:00 之前打的卡归到前一天 —— 因为 22:30 早睡和次日 06:40 早起是**同一晚**。
-> 没有它，两项永远不在同一个日期上，全勤和连续天数就永远不成立（这是 T30 修掉的 bug）。
-> 你们要是习惯凌晨 2 点睡，把这个值改成比如 `4` 或 `5` 就行。
+> 档位是**左闭右开**：22:15 整就算第二档（+1）。
+> `end: '24:00'` 表示到当天结束，是支持的写法。
+> 完整参数表和每个参数的取值范围见 **`打卡规则v2.md`**。
 
 改完规则有**三步，少一步都不生效**：
 

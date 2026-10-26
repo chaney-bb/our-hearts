@@ -1,18 +1,16 @@
 /**
- * 冒烟测试：验证打卡引擎的正确性 + 检查你当前的规则配置
+ * 冒烟测试：验证打卡规则引擎 + 本地模式完整流程
  *
- * 用法：node scripts/smoke-test.mjs（或者双击项目根目录的「同步规则.bat」）
+ * 用法：node scripts/smoke-test.mjs（或双击「同步规则.bat」）
  *
- * 设计要点：
- *   1~4 段用一套【固定的测试规则】跑断言，不受你在 rules.js 里怎么调影响。
- *   否则你改一次窗口，测试就红一次，最后大家都学会无视红字。
- *   第 5 段反过来，专门检查你当前的真实配置有没有写错。
+ * 1~3 段测"引擎"本身（用真实默认规则，不受你配置影响）
+ * 4 段测本地模式跑一遍完整流程
+ * 5 段反过来检查你当前的真实配置有没有写错
  */
 import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 
-// --- 假装自己在微信里（mock.js 会用到 wx.storage） ---
 let store = null
 globalThis.wx = {
   getStorageSync: function () {
@@ -36,7 +34,6 @@ function ok(name, condition, extra) {
   }
 }
 
-// 北京时间 -> 时间戳
 function bj(y, m, d, h, mi) {
   return Date.UTC(y, m - 1, d, h, mi, 0, 0) - 8 * 3600 * 1000
 }
@@ -46,150 +43,135 @@ function setNow(ts) {
   }
 }
 
-// ============ 用固定的测试规则，和你的配置解耦 ============
-const REAL_RULES = JSON.parse(JSON.stringify(rules.RULES))
-const TEST_WINDOWS = {
-  sleep: { start: '21:30', end: '23:59', label: '早睡', emoji: '🌙', tip: '' },
-  wake: { start: '05:30', end: '08:00', label: '早起', emoji: '☀️', tip: '' }
-}
+const C = rules.normalizeConfig({})
+const at = (h, mi) => bj(2026, 10, 26, h, mi)
 
-function useWindows(windows) {
-  Object.keys(windows).forEach(function (k) {
-    rules.RULES.windows[k] = Object.assign({}, windows[k])
-  })
-}
+console.log('\n[1] 早睡窗口与档位（21:30–24:00，2 / 1 / 0）')
+ok('21:29 还没开放', rules.windowState('sleep', at(21, 29), C) === 'upcoming')
+ok('21:30 开放，+2', rules.heartsAt('sleep', at(21, 30), C) === 2)
+ok('22:14 仍是 +2', rules.heartsAt('sleep', at(22, 14), C) === 2)
+ok('22:15 变成 +1（左闭右开）', rules.heartsAt('sleep', at(22, 15), C) === 1)
+ok('23:14 还是 +1', rules.heartsAt('sleep', at(23, 14), C) === 1)
+ok('23:15 变成 0', rules.heartsAt('sleep', at(23, 15), C) === 0)
+ok('23:59 仍然可以打卡', rules.windowState('sleep', at(23, 59), C) === 'open')
+ok('00:00 已经算新的一天（未开放）', rules.windowState('sleep', bj(2026, 10, 27, 0, 0), C) === 'upcoming')
 
-useWindows(TEST_WINDOWS)
+console.log('\n[2] 早起窗口与档位（06:00–12:00，1 / 0）')
+ok('05:59 还没开放', rules.windowState('wake', at(5, 59), C) === 'upcoming')
+ok('06:00 开放，+1', rules.heartsAt('wake', at(6, 0), C) === 1)
+ok('08:59 还是 +1', rules.heartsAt('wake', at(8, 59), C) === 1)
+ok('09:00 变成 0', rules.heartsAt('wake', at(9, 0), C) === 0)
+ok('11:59 仍然可以打卡', rules.windowState('wake', at(11, 59), C) === 'open')
+ok('12:00 关闭', rules.windowState('wake', at(12, 0), C) === 'expired')
 
-console.log('\n[1] 时间窗口判定（测试规则：早睡 21:30–23:59，早起 05:30–08:00）')
-setNow(bj(2026, 10, 26, 21, 0))
-ok('21:00 早睡还没开始', rules.windowState('sleep', Date.now()) === 'upcoming', rules.windowState('sleep', Date.now()))
-ok('21:00 早起已过', rules.windowState('wake', Date.now()) === 'expired')
-setNow(bj(2026, 10, 26, 22, 0))
-ok('22:00 早睡可以打卡', rules.windowState('sleep', Date.now()) === 'open')
-setNow(bj(2026, 10, 26, 23, 59))
-ok('23:59 早睡还可以打卡', rules.windowState('sleep', Date.now()) === 'open')
-setNow(bj(2026, 10, 27, 0, 1))
-// 注意：00:01 已经算"新的一天"了，早睡窗口是 21:30 才开始，所以是 upcoming 而不是 expired
-ok('00:01 属于新的一天，早睡还没开始', rules.windowState('sleep', Date.now()) === 'upcoming')
-setNow(bj(2026, 10, 27, 6, 30))
-ok('06:30 早起可以打卡', rules.windowState('wake', Date.now()) === 'open')
-setNow(bj(2026, 10, 27, 8, 30))
-ok('08:30 早起窗口关闭', rules.windowState('wake', Date.now()) === 'expired')
+console.log('\n[3] 打卡日（中午 12 点前的打卡算前一天）')
+ok('22:30 算当天', rules.sleepDayKey(bj(2026, 10, 26, 22, 30), C) === '2026-10-26')
+ok('次日 06:40 算前一天', rules.sleepDayKey(bj(2026, 10, 27, 6, 40), C) === '2026-10-26')
+ok('11:59 还算前一天', rules.sleepDayKey(bj(2026, 10, 27, 11, 59), C) === '2026-10-26')
+ok('12:00 起算当天', rules.sleepDayKey(bj(2026, 10, 27, 12, 0), C) === '2026-10-27')
+ok('跨月：11-01 06:00 算 10-31', rules.sleepDayKey(bj(2026, 11, 1, 6, 0), C) === '2026-10-31')
 
-console.log('\n[1b] 打卡日：中午 12 点前的打卡算前一天（跨零点算同一晚）')
-ok('22:30 算当天', rules.sleepDayKey(bj(2026, 10, 26, 22, 30)) === '2026-10-26')
-ok('次日 06:40 算前一天', rules.sleepDayKey(bj(2026, 10, 27, 6, 40)) === '2026-10-26')
-ok('11:59 还算前一天', rules.sleepDayKey(bj(2026, 10, 27, 11, 59)) === '2026-10-26')
-ok('12:00 起算当天', rules.sleepDayKey(bj(2026, 10, 27, 12, 0)) === '2026-10-27')
-ok('跨月：11-01 06:00 算 10-31', rules.sleepDayKey(bj(2026, 11, 1, 6, 0)) === '2026-10-31')
-
-console.log('\n[2] 连续天数')
+console.log('\n[4] 统计与配置合并')
 ok(
-  '今天全勤 -> 从今天往回数',
-  rules.calcStreak(['2026-10-24', '2026-10-25', '2026-10-26'], '2026-10-26') === 3
+  '全勤天数只数"两项都有"的日子',
+  rules.countFullDays({
+    '2026-10-01': { sleep: true, wake: true },
+    '2026-10-02': { sleep: true, wake: false },
+    '2026-10-03': { sleep: true, wake: true }
+  }) === 2
+)
+ok('22 天达标', rules.monthlyReached(22, C) === true)
+ok('21 天不达标', rules.monthlyReached(21, C) === false)
+ok(
+  '可配置：把门槛改成 20 天',
+  rules.monthlyReached(20, rules.normalizeConfig({ monthly: { requiredDays: 20 } })) === true
 )
 ok(
-  '今天还没打 -> 从昨天往回数，不打断',
-  rules.calcStreak(['2026-10-24', '2026-10-25'], '2026-10-26') === 2
+  '可配置：改档位奖励',
+  rules.heartsAt('sleep', at(22, 0), rules.normalizeConfig({ sleep: { tiers: [{ from: '21:30', to: '24:00', hearts: 5 }] } })) === 5
 )
-ok('断了一天就归零', rules.calcStreak(['2026-10-20'], '2026-10-26') === 0)
+ok('未知配置项会被忽略', rules.normalizeConfig({ 乱写: 1 }).乱写 === undefined)
+ok('数组是整体替换，不逐项合并', rules.normalizeConfig({ sleep: { tiers: [{ from: '21:30', to: '24:00', hearts: 3 }] } }).sleep.tiers.length === 1)
 
-console.log('\n[3] 奖励计算')
-const awards = rules.checkinAwards({
-  type: 'sleep',
-  isFullDay: true,
-  partnerDone: true,
-  streakAfter: 7
-})
-const total = awards.reduce(function (s, a) {
-  return s + a.delta
-}, 0)
-ok('早睡1 + 全勤1 + 同步1 + 连续7天10 = 13', total === 13, awards)
-
-console.log('\n[4] 本地模式完整流程')
-
-setNow(bj(2026, 10, 26, 22, 5))
+console.log('\n[5] 本地模式完整流程')
+setNow(bj(2026, 10, 26, 21, 35))
 async function wallet() {
   const s = await mock.call('session.get', {})
   return s.wallet.balance
 }
 
 const r1 = await mock.call('checkin.act', { type: 'sleep' })
-ok('22:05 早睡打卡成功', r1.ok === true && r1.reward.delta === 1, r1)
-ok('爱心变成 1', (await wallet()) === 1, await wallet())
+ok('21:35 早睡 +2', r1.ok === true && r1.reward.delta === 2, r1.reward)
+ok('爱心变成 2', (await wallet()) === 2)
 
 const r2 = await mock.call('checkin.act', { type: 'sleep' })
-ok('重复打卡被拦住', r2.ok === false && r2.code === 'DUP', r2)
+ok('同一晚重复打卡被拦住', r2.ok === false && r2.code === 'DUP', r2)
 
 const r3 = await mock.call('checkin.act', { type: 'wake' })
-ok('22:05 打早起卡被拦住', r3.ok === false && r3.code === 'CLOSED', r3)
+ok('晚上打早起卡被拦住', r3.ok === false && r3.code === 'CLOSED', r3)
 
 setNow(bj(2026, 10, 27, 6, 20))
 const r4 = await mock.call('checkin.act', { type: 'wake' })
-ok('次日 06:20 早起，归到昨晚 → 早起 1 + 全勤 1', r4.ok === true && r4.reward.delta === 2, r4.reward)
-ok('打卡日是 10-26（不是 10-27）', r4.detail.today.date === '2026-10-26', r4.detail.today.date)
-ok('两项都完成', r4.detail.today.fullDay === true)
-ok('爱心变成 3', (await wallet()) === 3, await wallet())
+ok('次日 06:20 早起 +1', r4.ok === true && r4.reward.delta === 1, r4.reward)
+ok('打卡日归到 10-26', r4.detail.today.date === '2026-10-26', r4.detail.today.date)
+ok('这一晚全勤成立', r4.detail.today.fullDay === true)
+ok('爱心变成 3', (await wallet()) === 3)
 
-setNow(bj(2026, 10, 27, 22, 30))
+setNow(bj(2026, 10, 27, 23, 20))
 const r5 = await mock.call('checkin.act', { type: 'sleep' })
-ok('当晚 22:30 早睡归到 10-27，只拿 +1', r5.ok === true && r5.reward.delta === 1, r5.reward)
+ok('23:20 打卡在 0 分档 → 不加爱心', r5.ok === true && r5.reward.delta === 0, r5.reward)
+ok('爱心还是 3', (await wallet()) === 3)
 
 const home = await mock.call('checkin.detail', {})
 ok('连续天数 = 1', home.streak === 1, home.streak)
-ok('今晚只完成了早睡（还没全勤）', home.today.fullDay === false)
+ok('今晚还没全勤（只打了早睡）', home.today.fullDay === false)
+ok('本月全勤进度 1/22', home.month.fullCount === 1 && home.month.requiredDays === 22, home.month)
 
 const history = await mock.call('checkin.history', { month: '2026-10' })
-ok('10 月记录里有 10-26 和 10-27', !!history.days['2026-10-26'] && !!history.days['2026-10-27'])
-ok('10 月全勤 1 天', history.stats.fullCount === 1, history.stats)
-ok('明细有 4 条奖励', history.logs.length === 4, history.logs.length)
+ok('10-26 全勤、10-27 只有早睡', !!history.days['2026-10-26'] && !!history.days['2026-10-27'])
+ok('本月全勤 1 天', history.stats.fullCount === 1, history.stats)
+ok('只有两次奖励（0 分档不产流水）', history.logs.length === 2, history.logs.length)
 
-// ============ 恢复你的真实配置，开始检查它 ============
-useWindows(REAL_RULES.windows)
-setNow(Date.now())
-
-console.log('\n[5] 检查你当前的规则（miniprogram/utils/rules.js）')
+console.log('\n[6] 检查你当前的规则（miniprogram/utils/rules.js）')
 
 function toMinutes(hhmm) {
   const parts = String(hhmm).split(':')
   return Number(parts[0]) * 60 + Number(parts[1])
 }
 
-rules.RULES.types.forEach(function (type) {
-  const w = rules.RULES.windows[type]
-  if (!w) {
-    ok(type + ' 窗口存在', false)
-    return
-  }
-  const valid = /^\d{1,2}:\d{2}$/.test(w.start) && /^\d{1,2}:\d{2}$/.test(w.end)
-  ok(w.label + ' 时间格式是 HH:mm（例如 21:30）', valid, w)
+rules.TYPES.forEach(function (type) {
+  const t = C[type]
+  const meta = rules.LABELS[type]
+  const valid = /^\d{1,2}:\d{2}$/.test(t.window.start) && /^\d{1,2}:\d{2}$/.test(t.window.end)
+  ok(meta.label + ' 时间格式 HH:mm', valid, t.window)
   if (!valid) return
 
-  const s = toMinutes(w.start)
-  const e = toMinutes(w.end)
-  ok(w.label + ' 开始时间早于结束时间（' + w.start + ' -> ' + w.end + '）', s < e, w)
-  ok(w.label + ' 窗口不是空的（至少 10 分钟）', e - s >= 10, e - s)
+  ok(meta.label + ' 开始早于结束', toMinutes(t.window.start) < toMinutes(t.window.end), t.window)
+
+  const tiers = t.tiers || []
+  ok(meta.label + ' 至少有一个档位', tiers.length > 0, tiers.length)
+  ok(meta.label + ' 档位首尾对齐窗口', tiers.length > 0 && tiers[0].from === t.window.start && tiers[tiers.length - 1].to === t.window.end, {
+    first: tiers[0] && tiers[0].from,
+    last: tiers[tiers.length - 1] && tiers[tiers.length - 1].to
+  })
+  ok(meta.label + ' 档位时间递增', tiers.every((x, i) => i === 0 || toMinutes(x.from) === toMinutes(tiers[i - 1].to)), tiers)
 })
 
-const nowState = function (type) {
-  return rules.windowState(type, Date.now())
-}
+ok('月度门槛在 1~31 之间', C.monthly.requiredDays >= 1 && C.monthly.requiredDays <= 31, C.monthly)
+
 console.log('')
-console.log('  当前生效的窗口（写完代码自动生效，云端需要重新部署）：')
-rules.RULES.types.forEach(function (type) {
-  const w = rules.RULES.windows[type]
-  const state = nowState(type)
-  const stateText =
-    state === 'open' ? '现在可以打卡' : state === 'upcoming' ? '还没开始' : '今天已过'
-  console.log(
-    '    ' + w.emoji + ' ' + w.label + '  ' + w.start + ' – ' + w.end + '   现在 → ' + stateText
-  )
+console.log('  当前生效的规则（写完代码自动生效，云端需要重新部署）：')
+rules.TYPES.forEach(function (type) {
+  const t = C[type]
+  const meta = rules.LABELS[type]
+  console.log('    ' + meta.emoji + ' ' + meta.label + '  ' + t.window.start + ' – ' + t.window.end + '   缺卡 -' + t.missPenalty)
+  t.tiers.forEach(function (x) {
+    console.log('        ' + x.from + ' – ' + x.to + '  →  +' + x.hearts)
+  })
 })
-console.log('')
-console.log('  分值：早睡 +' + rules.RULES.hearts.sleep + '  早起 +' + rules.RULES.hearts.wake +
-  '  全勤 +' + rules.RULES.hearts.fullDay + '  同步 +' + rules.RULES.hearts.sync +
-  '  连续7天 +' + rules.RULES.hearts.streak7 + '  连续30天 +' + rules.RULES.hearts.streak30)
+console.log(
+  '    月度全勤：' + C.monthly.requiredDays + ' 天 → +' + C.monthly.bonus + '（' + C.monthly.scope + '）'
+)
 
 console.log('')
 if (failed) {

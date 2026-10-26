@@ -16,7 +16,7 @@
 
   <block wx:if="{{ready}}">
 
-    <!-- 连续天数 -->
+    <!-- 连续天数 + 本月进度 -->
     <view class="stat-strip">
       <view class="ss-main">
         <text class="ss-num">🔥 {{streak}}</text>
@@ -25,9 +25,10 @@
       <view class="ss-time">{{clock}}</view>
     </view>
 
-    <view class="stale-banner" wx:if="{{rulesStale}}">
-      <text class="stale-title">⚠️ 云端还是旧规则</text>
-      <text class="stale-text">{{rulesStale}}</text>
+    <view class="month-strip">
+      <text class="ms-label">本月全勤</text>
+      <text class="ms-val">{{monthText}}</text>
+      <text class="ms-tag" wx:if="{{monthReached}}">已达标 🎉</text>
     </view>
 
     <view class="section-head">
@@ -68,12 +69,11 @@
 
     <view class="card rules-card">
       <view class="rules-title">爱心怎么来</view>
-      <view class="rule-line"><text>🌙 早睡打卡</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>☀️ 早起打卡</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>✨ 当天两项都完成</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>💞 两人同一天都完成同一项</text><text class="plus">+1</text></view>
-      <view class="rule-line"><text>🔥 连续 7 天 / 30 天全勤</text><text class="plus">+10 / +50</text></view>
-      <view class="rule-note">时间窗口按服务器时间判定；规则改完要同步 + 重新部署云函数</view>
+      <view class="rule-line"><text>🌙 早睡（按打卡时间分档）</text><text class="plus">+2 / +1 / 0</text></view>
+      <view class="rule-line"><text>☀️ 早起</text><text class="plus">09:00 前 +1，之后 0</text></view>
+      <view class="rule-line"><text>🔥 一个月打满 22 天</text><text class="plus">+10</text></view>
+      <view class="rule-line"><text>😴 这一晚没打早睡 / 早起</text><text class="plus">−1</text></view>
+      <view class="rule-note">档位：21:30–22:15 +2，22:15–23:15 +1，23:15 之后 0。规则由服务端下发，改规则要双方同意。</view>
     </view>
 
     <view class="safe-bottom"></view>

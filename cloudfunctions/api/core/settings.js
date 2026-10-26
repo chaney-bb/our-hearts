@@ -9,8 +9,9 @@
  */
 const { db, COL } = require('./db.js')
 
-/** 只接受默认值里出现过的键，防止写进垃圾字段 */
+/** 只接受默认值里出现过的键；数组整体替换（比如 tiers 换一整套） */
 function deepMerge(base, patch) {
+  if (Array.isArray(patch)) return patch.slice()
   if (!base || typeof base !== 'object') return patch
   if (!patch || typeof patch !== 'object') return base
 

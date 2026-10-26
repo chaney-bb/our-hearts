@@ -39,6 +39,38 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 本月全勤进度 */
+.month-strip {
+  display: flex;
+  align-items: center;
+  margin: 16rpx 0 4rpx;
+  padding: 22rpx 28rpx;
+  background: #FFFFFF;
+  border-radius: 26rpx;
+  box-shadow: 0 8rpx 26rpx rgba(255, 107, 129, 0.07);
+}
+
+.ms-label {
+  font-size: 24rpx;
+  color: #A08B87;
+}
+
+.ms-val {
+  margin-left: 14rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #FF6B81;
+}
+
+.ms-tag {
+  margin-left: auto;
+  font-size: 21rpx;
+  color: #2FAE8B;
+  background: #EAF7F2;
+  padding: 6rpx 18rpx;
+  border-radius: 999rpx;
+}
+
 .section-head {
   display: flex;
   align-items: baseline;

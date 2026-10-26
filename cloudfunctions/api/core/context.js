@@ -74,10 +74,25 @@ async function create(mod, openid) {
     db: scopedDb(mod),
 
     // 唯一的爱心入口（只能加/减自己的）
-    award: async function (n, reason, refId) {
+    // opts: { refId, idemKey }  —— idemKey 用来防重复发放
+    award: async function (n, reason, opts) {
+      var o = opts || {}
       return hearts.apply(
         ctx,
-        [{ delta: n, reason: reason, refId: refId }],
+        [{ delta: n, reason: reason, refId: o.refId || '', idemKey: o.idemKey || '' }],
+        { now: ctx.now, dateKey: ctx.dateKey, module: mod.key }
+      )
+    },
+
+    /** 扣自己的爱心（扣到 0 封顶）；实际扣了多少返回多少 */
+    penalize: async function (n, reason, opts) {
+      var o = opts || {}
+      var balance = await hearts.balanceOf(ctx.openid, ctx.coupleId)
+      var amount = Math.min(Math.max(0, n), Math.max(0, balance))
+      if (amount <= 0) return 0
+      return hearts.apply(
+        ctx,
+        [{ delta: -amount, reason: reason, refId: o.refId || '', idemKey: o.idemKey || '' }],
         { now: ctx.now, dateKey: ctx.dateKey, module: mod.key }
       )
     },

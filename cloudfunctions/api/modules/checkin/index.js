@@ -1,17 +1,14 @@
 /**
  * 打卡模块（checkin）：早睡 / 早起
  *
- * 这是"模块契约"的样板，以后每个功能照这个写：
- *   key / name / emoji / collections / defaults / actions / on
- *
+ * 模块契约样板：key / name / emoji / collections / defaults / actions / on
  * 模块只通过 ctx 用内核，不 require 任何别的模块。
  *
- * ⚠️ 关于"日期"：这里所有 date 都不是自然日，而是**打卡日**（rules.sleepDayKey）。
- *    中午 12 点之前的打卡算前一天，因为"昨晚早睡 + 今早起床"是同一晚。
- *    没有这个，早睡（D 日）和早起（D+1 日）永远不在同一个日期上，
- *    全勤 / 连续天数 / 里程碑奖励全都触发不了。
+ * ⚠️ 两个"日期"概念：
+ *   真实时间 ctx.now —— 判断"现在能不能打卡、能拿几分"（窗口 + 档位）
+ *   打卡日 dayKey    —— 记录归属（中午 12 点前算前一天，因为那是同一晚）
  *
- * 时间窗口的判定仍然用真实时间（ctx.now），因为那是"现在能不能打卡"。
+ * ⚠️ 规则全部来自 ctx.config（默认值 + 用户覆盖），不写死任何数值。
  */
 const clock = require('../../core/clock.js')
 const rules = require('./rules.js')
@@ -23,9 +20,12 @@ const LOOKBACK_DAYS = 60
 
 /* ------------------------------ 内部工具 ------------------------------ */
 
-/** 当前的打卡日 */
+function cfgOf(ctx) {
+  return ctx.config || rules.DEFAULTS
+}
+
 function dayKeyOf(ctx) {
-  return rules.sleepDayKey(ctx.now)
+  return rules.sleepDayKey(ctx.now, cfgOf(ctx))
 }
 
 async function todayRecords(ctx) {
@@ -50,9 +50,10 @@ async function recentDays(ctx) {
 /* ------------------------------ 四个动作 ------------------------------ */
 
 /**
- * 给外壳（首页宫格）用：只返回几个数字 + 一句摘要
+ * 给外壳（首页宫格）用：几个数字 + 一句摘要
  */
 async function summary(ctx) {
+  const cfg = cfgOf(ctx)
   const records = await todayRecords(ctx)
   const keys = await fullDayKeys(ctx)
   const done = (records.sleep ? 1 : 0) + (records.wake ? 1 : 0)
@@ -60,30 +61,40 @@ async function summary(ctx) {
 
   return {
     todayDone: done,
-    todayTotal: rules.RULES.types.length,
+    todayTotal: rules.TYPES.length,
     streak: streak,
-    sub: '今日 ' + done + '/' + rules.RULES.types.length + ' · 连续 ' + streak + ' 天'
+    sub: '今日 ' + done + '/' + rules.TYPES.length + ' · 连续 ' + streak + ' 天'
   }
 }
 
 /**
- * 模块自己的页面用：返回这一页要的全部数据
+ * 模块自己的页面用
  * 注意：爱心余额不属于打卡模块，由 session.get 提供（账本是内核的）
  */
 async function detail(ctx) {
+  const cfg = cfgOf(ctx)
   const records = await todayRecords(ctx)
   const r = await recentDays(ctx)
+  const dayKey = dayKeyOf(ctx)
+  const days = await store.getMonth(ctx, dayKey.slice(0, 7))
+  const fullCount = rules.countFullDays(days)
 
   return {
-    streak: rules.calcStreak(r.fullDayKeys, dayKeyOf(ctx)),
+    streak: rules.calcStreak(r.fullDayKeys, dayKey),
     today: {
-      date: dayKeyOf(ctx),
+      date: dayKey,
       records: records,
       fullDay: !!(records.sleep && records.wake)
     },
     recent: r.recent,
-    // 把云端正在用的规则带回去，客户端一比对就知道要不要重新部署
-    rules: { windows: rules.RULES.windows, hearts: rules.RULES.hearts }
+    month: {
+      month: dayKey.slice(0, 7),
+      fullCount: fullCount,
+      requiredDays: cfg.monthly.requiredDays,
+      reached: rules.monthlyReached(fullCount, cfg)
+    },
+    // 服务端下发的完整规则，前端照着渲染（前端不再持有规则）
+    config: cfg
   }
 }
 
@@ -91,71 +102,92 @@ async function detail(ctx) {
  * 写操作：打卡
  */
 async function act(ctx, payload) {
+  const cfg = cfgOf(ctx)
   const type = payload.type
-  const w = rules.RULES.windows[type]
-  if (!w) return respond.biz('BAD_TYPE', '没有这个打卡项')
+  const meta = rules.LABELS[type]
+  if (!meta) return respond.biz('BAD_TYPE', '没有这个打卡项')
 
-  // 关键：用 ctx.now（服务器时间）判断窗口，不用客户端时间
-  const state = rules.windowState(type, ctx.now)
+  // 窗口和档位都按"真实时间"算
+  const state = rules.windowState(type, ctx.now, cfg)
+  const t = cfg[type]
   if (state === 'upcoming') {
     return respond.biz(
       'NOT_YET',
-      w.label + '打卡 ' + w.start + ' 才开始（云端现在 ' + clock.timeKey(ctx.now) + '）'
+      meta.label + '打卡 ' + t.window.start + ' 开放（云端现在 ' + clock.timeKey(ctx.now) + '）'
     )
   }
   if (state === 'expired') {
     return respond.biz(
       'CLOSED',
-      '今天已经过了' + w.label + '打卡时间（窗口 ' + w.start + '–' + w.end + '）'
+      '这一晚的' + meta.label + '打卡已经结束（窗口 ' + t.window.start + '–' + t.window.end + '）'
     )
   }
 
   const dayKey = dayKeyOf(ctx)
 
   if (await store.countType(ctx, ctx.openid, dayKey, type)) {
-    return respond.biz('DUP', '这一晚已经打过' + w.label + '卡啦')
+    return respond.biz('DUP', '这一晚已经打过' + meta.label + '卡啦')
   }
 
-  await store.add(ctx, dayKey, type)
+  // 档位奖励：按打卡那一刻的时间算
+  const heartsAt = rules.heartsAt(type, ctx.now, cfg)
+  const base = typeof heartsAt === 'number' ? heartsAt : 0
+
+  await store.add(ctx, dayKey, type, base)
 
   const records = await todayRecords(ctx)
-  const isFullDay = !!(records.sleep && records.wake)
+  const reasons = []
+  let total = 0
 
-  // 对方这一晚完成同一项了吗（同步奖）
-  let partnerDone = false
-  if (ctx.partner) {
-    partnerDone = (await store.countType(ctx, ctx.partner.openid, dayKey, type)) > 0
+  if (base > 0) {
+    await ctx.award(base, meta.label + '打卡', { refId: dayKey })
+    total += base
+    reasons.push(meta.label + '打卡 +' + base)
+  } else {
+    reasons.push(meta.label + '打卡（这一档没有爱心）')
+  }
+
+  // 同步奖（默认关闭；想开就把 config.syncBonus 设成 1）
+  if (cfg.syncBonus > 0 && ctx.partner) {
+    const partnerDone = (await store.countType(ctx, ctx.partner.openid, dayKey, type)) > 0
+    if (partnerDone) {
+      await ctx.award(cfg.syncBonus, '同步' + meta.label, { refId: dayKey })
+      total += cfg.syncBonus
+      reasons.push('同步' + meta.label + ' +' + cfg.syncBonus)
+    }
+  }
+
+  // 月度全勤：这一晚凑齐全勤后，看本月是否达标（幂等，同一个月只发一次）
+  if (records.sleep && records.wake) {
+    const days = await store.getMonth(ctx, dayKey.slice(0, 7))
+    const fullCount = rules.countFullDays(days)
+    if (rules.monthlyReached(fullCount, cfg)) {
+      const month = dayKey.slice(0, 7)
+      const got = await ctx.award(cfg.monthly.bonus, '月度全勤 ' + month, {
+        idemKey: 'monthly:' + month
+      })
+      if (got) {
+        total += got
+        reasons.push('月度全勤（' + fullCount + ' 天） +' + got)
+      }
+    }
   }
 
   const keys = await fullDayKeys(ctx)
-  const streakAfter = rules.calcStreak(keys, dayKey)
-
-  const awards = rules.checkinAwards({
-    type: type,
-    isFullDay: isFullDay,
-    partnerDone: partnerDone,
-    streakAfter: streakAfter
-  })
-
-  let total = 0
-  const reasons = []
-  for (const a of awards) {
-    total += a.delta
-    reasons.push(a.reason + ' +' + a.delta)
-    await ctx.award(a.delta, a.reason)
-  }
 
   return {
     reward: { delta: total, reasons: reasons },
-    detail: await detail(ctx)
+    detail: await detail(ctx),
+    streak: rules.calcStreak(keys, dayKey)
   }
 }
 
 /**
  * 记录页：日历 + 统计 + 爱心明细
- * 月份也按打卡日归属：11-01 早上 6 点的早起，会出现在 10 月的日历里
+ * 月份也按打卡日归属：11-01 早上 6 点的早起会出现在 10 月
  */
 async function history(ctx, payload) {
+  const cfg = cfgOf(ctx)
   const month = payload.month || dayKeyOf(ctx).slice(0, 7)
   const days = await store.getMonth(ctx, month)
 
@@ -168,42 +200,29 @@ async function history(ctx, payload) {
   return {
     month: month,
     days: days,
-    stats: { fullCount: fullKeys.length, bestStreak: bestStreakOf(fullKeys) },
+    stats: {
+      fullCount: fullKeys.length,
+      bestStreak: rules.bestStreak(fullKeys),
+      requiredDays: cfg.monthly.requiredDays,
+      reached: rules.monthlyReached(fullKeys.length, cfg),
+      bonus: cfg.monthly.bonus
+    },
     logs: ledger.logs,
     warn: ledger.warn,
     hearts: await ctx.balance()
   }
 }
 
-function bestStreakOf(keys) {
-  const sorted = keys.slice().sort()
-  let best = 0
-  let run = 0
-  let prev = ''
-  for (const k of sorted) {
-    if (prev && clock.shiftKey(prev, 1) === k) run++
-    else run = 1
-    if (run > best) best = run
-    prev = k
-  }
-  return best
-}
-
 module.exports = {
   key: 'checkin',
   name: '早睡早起',
   emoji: '🌙',
-  version: 1,
+  version: 2,
 
-  // 本模块独占的集合（内核会拦住越权访问）
   collections: ['checkins'],
 
-  // 规则默认值（P3 之后用户可以在设置页覆盖）
-  defaults: {
-    cutoverHour: rules.RULES.cutoverHour,
-    windows: rules.RULES.windows,
-    hearts: rules.RULES.hearts
-  },
+  // 规则默认值（用户覆盖存 core_settings，合并后就是 ctx.config）
+  defaults: rules.DEFAULTS,
 
   actions: {
     summary: summary,
@@ -212,6 +231,5 @@ module.exports = {
     history: history
   },
 
-  // 可选：订阅别的事件（现在没有，P5 再看）
   on: {}
 }

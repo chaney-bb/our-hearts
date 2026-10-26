@@ -6,6 +6,8 @@ Page({
     ready: false,
     streak: 0,
     dayLabel: '',
+    monthText: '',
+    monthReached: false,
     items: [],
     clock: '',
     week: [],
@@ -14,8 +16,7 @@ Page({
     float: '',
     floatSub: '',
     error: '',
-    errorRaw: '',
-    rulesStale: ''
+    errorRaw: ''
   },
 
   onShow: function () {
@@ -51,32 +52,20 @@ Page({
 
       self.offset = (d.serverNow || Date.now()) - Date.now()
       self.detail = d
+      // 规则完全由服务端下发，前端不再持有任何数值
+      self.cfg = d.config || rules.DEFAULTS
       self.setData({
         ready: true,
         streak: d.streak,
         dayLabel: d.today.date,
+        monthText: d.month ? d.month.fullCount + ' / ' + d.month.requiredDays : '',
+        monthReached: !!(d.month && d.month.reached),
         error: '',
-        errorRaw: '',
-        rulesStale: self.checkStale(d.rules)
+        errorRaw: ''
       })
       self.render()
       self.startTick()
     })
-  },
-
-  checkStale: function (sr) {
-    if (!sr || !sr.windows || !sr.windows.sleep || !sr.windows.wake) return ''
-    var mine = { windows: rules.RULES.windows, hearts: rules.RULES.hearts }
-    if (JSON.stringify(sr) === JSON.stringify(mine)) return ''
-
-    var winDiff = JSON.stringify(sr.windows) !== JSON.stringify(mine.windows)
-    if (winDiff) {
-      return (
-        '云端还在跑旧规则（早睡 ' + sr.windows.sleep.start + ' 开始），你本地已经是 ' +
-        mine.windows.sleep.start + '。双击「同步规则.bat」，再右键 cloudfunctions/api 重新部署'
-      )
-    }
-    return '云端的爱心分值和本地不一致，双击「同步规则.bat」并重新部署云函数'
   },
 
   retry: function () {
@@ -89,7 +78,8 @@ Page({
     if (!d) return
 
     var now = Date.now() + (this.offset || 0)
-    var today = rules.describeToday(d.today.records, now)
+    var cfg = this.cfg || rules.DEFAULTS
+    var today = rules.describeToday(d.today.records, now, cfg)
 
     var week = (d.recent || []).map(function (r) {
       return { date: r.date, fullDay: r.fullDay, dayLabel: r.date.slice(5).replace('-', '/') }
@@ -153,9 +143,12 @@ Page({
 
       self.offset = res.serverNow - Date.now()
       self.detail = Object.assign({}, self.detail, res.detail)
+      if (res.detail && res.detail.config) self.cfg = res.detail.config
       self.setData({
         streak: self.detail.streak,
-        dayLabel: (self.detail.today && self.detail.today.date) || self.data.dayLabel
+        dayLabel: (self.detail.today && self.detail.today.date) || self.data.dayLabel,
+        monthText: self.detail.month ? self.detail.month.fullCount + ' / ' + self.detail.month.requiredDays : self.data.monthText,
+        monthReached: !!(self.detail.month && self.detail.month.reached)
       })
       self.render()
 

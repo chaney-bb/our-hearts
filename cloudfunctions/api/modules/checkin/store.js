@@ -13,7 +13,7 @@ const clock = require('../../core/clock.js')
 
 const COLL = COL.checkins
 
-/** 某天我的打卡记录 -> { sleep: { at }, wake: { at } } */
+/** 某天我的打卡记录 -> { sleep: { at, hearts }, wake: { at, hearts } } */
 async function getRecords(ctx, dateKey) {
   const res = await ctx.db
     .collection(COLL)
@@ -21,7 +21,7 @@ async function getRecords(ctx, dateKey) {
     .get()
   const records = {}
   res.data.forEach(function (d) {
-    records[d.type] = { at: d.at }
+    records[d.type] = { at: d.at, hearts: typeof d.hearts === 'number' ? d.hearts : null }
   })
   return records
 }
@@ -35,7 +35,7 @@ async function countType(ctx, openid, dateKey, type) {
   return res.total
 }
 
-async function add(ctx, dateKey, type) {
+async function add(ctx, dateKey, type, hearts) {
   return ctx.db.collection(COLL).add({
     data: {
       openid: ctx.openid,
@@ -43,6 +43,7 @@ async function add(ctx, dateKey, type) {
       date: dateKey,
       type: type,
       at: ctx.now,
+      hearts: typeof hearts === 'number' ? hearts : null,
       source: 'normal'
     }
   })

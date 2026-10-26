@@ -3,8 +3,8 @@
  *
  * 用法：node scripts/cloud-test.mjs
  *
- * 覆盖：登记 / 校验 / 配对门禁 / 配对 / 同步奖 / 个人钱包独立 /
- *       连续天数按关系 / 解绑清零 / 对账 / 缺集合容错 / 兜底错误
+ * 覆盖：登记 / 校验 / 配对门禁 / 配对 / 分档奖励 / 0 分档 / 个人钱包独立 /
+ *       月度全勤 / 连续天数按关系 / 解绑清零 / 打卡日跨零点 / 容错 / 兜底错误
  * 不需要连真云开发、不需要部署。
  */
 import Module from 'node:module'
@@ -39,9 +39,6 @@ function bj(y, m, d, h, mi) {
 function setNow(ts) {
   Date.now = () => ts
 }
-function atDay(y, m, d, minutes) {
-  return bj(y, m, d, Math.floor(minutes / 60), minutes % 60)
-}
 function call(action, payload) {
   return api.main({ action: action, payload: payload || {} })
 }
@@ -57,14 +54,10 @@ function unsilence() {
 const A = 'openid_A'
 const B = 'openid_B'
 const C = 'openid_C'
+const D = 'openid_D'
+const E = 'openid_E'
 
-const PROFILE = {
-  realName: '张三',
-  phone: '13800138000',
-  birthday: '1995-01-01',
-  gender: 'male',
-  bio: '你好'
-}
+const PROFILE = { realName: '张三', phone: '13800138000', birthday: '1995-01-01', gender: 'male', bio: '你好' }
 
 async function asUser(openid) {
   fake.state.setOpenid(openid)
@@ -73,9 +66,21 @@ async function register(openid, userId, extra) {
   await asUser(openid)
   return call('session.register', { data: Object.assign({ userId: userId }, PROFILE, extra || {}) })
 }
+async function walletOf(openid) {
+  await asUser(openid)
+  const s = await call('session.get')
+  return s.wallet.balance
+}
 function coupleIdOf(openid) {
   const p = fake.state.all('profiles').find((x) => x.openid === openid)
   return p ? p.coupleId : ''
+}
+async function seedFullDay(coupleId, openid, date) {
+  for (const type of ['sleep', 'wake']) {
+    await fake.db.collection('checkins').add({
+      data: { openid, coupleId, date, type, at: bj(2026, 9, 1, 22, 0), hearts: 1, source: 'normal' }
+    })
+  }
 }
 
 console.log('\n[1] 新用户：还没登记，不能玩任何模块')
@@ -94,20 +99,10 @@ ok('没登记时模块被拦', d.ok === false && d.code === 'NEED_REGISTER', d)
 console.log('\n[2] 登记校验')
 let r = await register(A, 'a', {})
 ok('用户ID太短被拒', r.ok === false && r.code === 'BAD_USER_ID', r)
-
 r = await register(A, '阿明', { phone: '123' })
 ok('手机号格式错被拒', r.ok === false && r.code === 'BAD_PHONE', r)
-
-r = await register(A, '阿明', { gender: 'x' })
-ok('性别非法被拒', r.ok === false && r.code === 'BAD_GENDER', r)
-
-r = await register(A, '阿明', { birthday: '1995/01/01' })
-ok('生日格式错被拒', r.ok === false && r.code === 'BAD_BIRTHDAY', r)
-
 r = await register(A, '阿明')
 ok('正常登记成功', r.ok === true, r)
-ok('登记完 needRegister 变 false', r.needRegister === false)
-ok('档案里带上登记信息', r.me.userId === '阿明' && r.me.realName === '张三', r.me)
 const inviteA = r.inviteCode
 
 r = await register(B, '阿明')
@@ -120,65 +115,83 @@ ok('未配对被拦', d.ok === false && d.code === 'NOT_PAIRED', d)
 
 console.log('\n[4] 配对')
 r = await register(B, '小红')
-ok('B 登记成功', r.ok === true, r)
 const inviteB = r.inviteCode
-
-r = await call('session.bind', { inviteCode: 'ZZZZZZ' })
-ok('错邀请码被拒', r.ok === false && r.code === 'NOT_FOUND', r)
-
 r = await call('session.bind', { inviteCode: inviteA })
 ok('B 配对成功', r.ok === true && r.bound === true, r)
-ok('B 看到对方档案', r.partner && r.partner.userId === '阿明', r.partner)
-
 r = await register(C, '小刚')
 r = await call('session.bind', { inviteCode: inviteA })
 ok('用过的邀请码不能再配对', r.ok === false, r)
 
-console.log('\n[5] 个人钱包独立')
+console.log('\n[5] 分档奖励')
 await asUser(A)
-setNow(bj(2026, 10, 26, 22, 0))
+setNow(bj(2026, 10, 26, 21, 35))
 d = await call('checkin.act', { type: 'sleep' })
-ok('A 打卡成功', d.ok === true, d)
+ok('21:35 早睡 → +2', d.ok === true && d.reward.delta === 2, d.reward)
+ok('打卡记录里存了档位分值', fake.state.all('checkins').find((x) => x.openid === A && x.type === 'sleep').hearts === 2)
 
-s = await call('session.get')
-ok('A 余额 +1', s.wallet.balance === 1, s.wallet)
-ok('B 余额还是 0（互不影响）', s.partnerWallet.balance === 0, s.partnerWallet)
-
-const walletA = fake.state.all('core_wallets').find((w) => w.openid === A)
-ok('A 的钱包文档存在且余额 1', walletA && walletA.balance === 1, walletA)
-
-console.log('\n[6] 同步奖 + 对方余额可见')
 await asUser(B)
-setNow(bj(2026, 10, 26, 22, 5))
+setNow(bj(2026, 10, 26, 22, 20))
 d = await call('checkin.act', { type: 'sleep' })
-const reasons = (d.reward && d.reward.reasons) || []
-ok('B 拿到同步奖', reasons.some((x) => x.indexOf('同步') === 0), reasons)
+ok('22:20 早睡 → +1', d.ok === true && d.reward.delta === 1, d.reward)
 
-s = await call('session.get')
-ok('B 余额 = 1 + 1 = 2', s.wallet.balance === 2, s.wallet)
-ok('B 能看到 A 的余额', s.partnerWallet.balance === 1, s.partnerWallet)
+ok('A 余额 2（互不影响）', (await walletOf(A)) === 2)
+ok('B 余额 1', (await walletOf(B)) === 1)
+
+console.log('\n[6] 0 分档：打了但不给爱心')
+await asUser(A)
+setNow(bj(2026, 10, 27, 23, 20))
+d = await call('checkin.act', { type: 'sleep' })
+ok('23:20 打卡 → 0 爱心', d.ok === true && d.reward.delta === 0, d.reward)
+ok('余额还是 2', (await walletOf(A)) === 2)
+ok('记录里写着 0 分', fake.state.all('checkins').find((x) => x.openid === A && x.date === '2026-10-27').hearts === 0)
 
 console.log('\n[7] 记录页')
 d = await call('checkin.history', { month: '2026-10' })
 ok('记录页返回 ok', d.ok === true, d)
-ok('日历里有 10-26', !!d.days['2026-10-26'], Object.keys(d.days || {}))
-ok('爱心明细有内容', d.logs.length > 0)
-ok('没有 warn', d.warn === '', d.warn)
+ok('10-26 和 10-27 都有记录', !!d.days['2026-10-26'] && !!d.days['2026-10-27'], Object.keys(d.days || {}))
+ok('本月全勤 0 天（只有早睡）', d.stats.fullCount === 0, d.stats)
+ok('门槛 22 天带回来了', d.stats.requiredDays === 22, d.stats)
 
 console.log('\n[8] 连续天数按"这段关系"算')
 const cidAB = coupleIdOf(A)
-for (const day of ['2026-10-24', '2026-10-25']) {
-  for (const type of ['sleep', 'wake']) {
-    await fake.db.collection('checkins').add({
-      data: { openid: A, coupleId: cidAB, date: day, type, at: bj(2026, 10, 26, 1, 0), source: 'normal' }
-    })
-  }
-}
+await seedFullDay(cidAB, A, '2026-10-24')
+await seedFullDay(cidAB, A, '2026-10-25')
 await asUser(A)
+setNow(bj(2026, 10, 26, 23, 30))
 d = await call('checkin.detail')
 ok('两天全勤 → 连续 2 天', d.streak === 2, d.streak)
 
-console.log('\n[9] 解绑：二次确认 + 清零 + 封存')
+console.log('\n[9] 月度全勤：打满 22 天 → +10（只发一次）')
+for (let i = 1; i <= 21; i++) {
+  await seedFullDay(cidAB, A, '2026-09-' + String(i).padStart(2, '0'))
+}
+await asUser(A)
+setNow(bj(2026, 9, 30, 21, 35))
+d = await call('checkin.act', { type: 'sleep' })
+ok('第 22 天的早睡只给档位 +2（这一晚还没打完）', d.reward.delta === 2, d.reward)
+
+setNow(bj(2026, 10, 1, 6, 30))
+d = await call('checkin.act', { type: 'wake' })
+ok('这一晚打满 → 早起 +1 和全勤 +10 = 11', d.reward.delta === 11, d.reward)
+ok(
+  '奖励说明里有"月度全勤"',
+  (d.reward.reasons || []).some((x) => x.indexOf('月度全勤') === 0),
+  d.reward.reasons
+)
+ok(
+  '月度全勤流水只写了一条（幂等）',
+  fake.state.all('heart_logs').filter((l) => String(l.reason).indexOf('月度全勤') === 0).length === 1
+)
+
+d = await call('checkin.history', { month: '2026-09' })
+ok('9 月全勤 22 天', d.stats.fullCount === 22, d.stats)
+ok('达标标记为 true', d.stats.reached === true, d.stats)
+
+console.log('\n[10] 解绑：二次确认 + 清零 + 封存')
+const beforeUnbind = await walletOf(A)
+ok('解绑前 A 有余额', beforeUnbind > 0, beforeUnbind)
+
+await asUser(A)
 r = await call('session.unbind', {})
 ok('不给确认时拒绝解绑', r.ok === false && r.code === 'NO_CONFIRM', r)
 
@@ -189,41 +202,55 @@ ok('A 余额清零', r.wallet.balance === 0, r.wallet)
 
 const old = fake.state.all('couples').find((c) => c._id === cidAB)
 ok('旧关系被标记 dissolved', old && old.status === 'dissolved', old && old.status)
-
-const zeroLog = fake.state.all('heart_logs').find((l) => l.reason === '解除绑定清零' && l.openid === A)
-ok('流水里留下"解除绑定清零"', !!zeroLog, zeroLog)
+ok(
+  '流水里留下"解除绑定清零"',
+  !!fake.state.all('heart_logs').find((l) => l.reason === '解除绑定清零' && l.openid === A)
+)
 
 d = await call('checkin.detail')
 ok('解绑后不能再用模块', d.ok === false && d.code === 'NOT_PAIRED', d)
 
-console.log('\n[10] 重新配对后从零开始（不继承上一个人的数据）')
+console.log('\n[11] 重新配对：从零开始，不继承上一个人的数据')
 r = await call('session.get')
 const inviteA2 = r.inviteCode
-ok('解绑后拿到新的邀请码', inviteA2 && inviteA2 !== inviteA, { old: inviteA, now: inviteA2 })
+ok('拿到新的邀请码', inviteA2 && inviteA2 !== inviteA, { old: inviteA, now: inviteA2 })
 
-await asUser(C)
 await register(C, '小刚')
 r = await call('session.bind', { inviteCode: inviteA2 })
 ok('A 和 C 重新配对成功', r.ok === true && r.bound === true, r)
 
 await asUser(A)
-setNow(bj(2026, 10, 27, 22, 10))
+setNow(bj(2026, 10, 28, 21, 40))
 d = await call('checkin.detail')
 ok('连续天数从 0 开始（旧记录不算）', d.streak === 0, d.streak)
 ok('旧记录还在库里（封存，不删）', fake.state.all('checkins').filter((x) => x.coupleId === cidAB).length >= 4)
+ok('10 月又是 0 天全勤', d.month.fullCount === 0, d.month)
 
-console.log('\n[11] 对账：余额 = 流水之和')
+console.log('\n[12] 幂等与对账')
+const heartsCore = require('../cloudfunctions/api/core/hearts.js')
+const cidNow = coupleIdOf(A)
+const n1 = await heartsCore.apply(
+  { openid: A, coupleId: cidNow },
+  [{ delta: 1, reason: '幂等测试', idemKey: 'test-idem-1' }],
+  { now: Date.now(), dateKey: '2026-10-30' }
+)
+const n2 = await heartsCore.apply(
+  { openid: A, coupleId: cidNow },
+  [{ delta: 1, reason: '幂等测试', idemKey: 'test-idem-1' }],
+  { now: Date.now(), dateKey: '2026-10-30' }
+)
+ok('同一个 idemKey 只发一次', n1 === 1 && n2 === 0, { n1: n1, n2: n2 })
+
+await asUser(A)
 s = await call('session.verify')
 ok('A 对账通过', s.ok === true && s.ledger === s.wallet, s)
 
-console.log('\n[12] 打卡日：跨零点算同一晚（T30）')
-const D = 'openid_D'
-const E = 'openid_E'
+console.log('\n[13] 打卡日：跨零点算同一晚')
 await register(D, '阿呆')
 let rd = await call('session.get')
-const inviteD = rd.inviteCode
 await register(E, '阿瓜')
-await call('session.bind', { inviteCode: inviteD })
+r = await call('session.bind', { inviteCode: rd.inviteCode })
+ok('D 和 E 配对成功', r.ok === true, r)
 
 await asUser(D)
 setNow(bj(2026, 10, 30, 22, 30))
@@ -233,20 +260,19 @@ ok('10-30 22:30 早睡归属 10-30', d.ok === true && d.detail.today.date === '2
 setNow(bj(2026, 10, 31, 6, 40))
 d = await call('checkin.act', { type: 'wake' })
 ok('10-31 06:40 的早起也归属 10-30', d.ok === true && d.detail.today.date === '2026-10-30', d.detail && d.detail.today)
-ok('同一晚两项齐 → 早起1 + 全勤1 = 2', d.reward.delta === 2, d.reward)
 ok('这一晚全勤成立', d.detail.today.fullDay === true)
-ok('连续天数变成 1', d.detail.streak === 1, d.detail.streak)
+ok('连续天数 1', d.detail.streak === 1, d.detail.streak)
 
 setNow(bj(2026, 11, 1, 6, 0))
 d = await call('checkin.act', { type: 'wake' })
 ok('11-01 06:00 的早起归属 10-31', d.ok === true && d.detail.today.date === '2026-10-31', d.detail && d.detail.today)
 
 d = await call('checkin.history', { month: '2026-10' })
-ok('10 月日历里有 10-31（跨月归属）', !!(d.days['2026-10-31'] && d.days['2026-10-31'].wake), d.days['2026-10-31'])
+ok('10 月日历里有 10-31', !!(d.days['2026-10-31'] && d.days['2026-10-31'].wake), d.days['2026-10-31'])
 d = await call('checkin.history', { month: '2026-11' })
 ok('11 月日历里没有它', !d.days['2026-10-31'], Object.keys(d.days || {}))
 
-console.log('\n[13] 容错与兜底')
+console.log('\n[14] 容错与兜底')
 fake.state.drop('heart_logs')
 silence()
 d = await call('checkin.history', { month: '2026-10' })

@@ -171,6 +171,11 @@ const checkinMarkup = `
       <div class="ss-time">22:14</div>
     </div>
 
+    <div class="month-strip">
+      <span class="ms-label">本月全勤</span>
+      <span class="ms-val">18 / 22</span>
+    </div>
+
     <div class="section-head">
       <span class="section-title">这一晚的打卡</span>
       <span class="section-sub">2026-10-26 · 看日历 ›</span>
@@ -180,8 +185,8 @@ const checkinMarkup = `
       <div class="emoji-wrap sleep">🌙</div>
       <div class="card-main">
         <div class="card-title">早睡</div>
-        <div class="card-meta">21:30 – 23:59</div>
-        <div class="card-hint done">22:07 已完成</div>
+        <div class="card-meta">21:30 – 24:00</div>
+        <div class="card-hint done">22:07 打卡 +2</div>
       </div>
       <div class="btn is-done">已完成</div>
     </div>
@@ -190,8 +195,8 @@ const checkinMarkup = `
       <div class="emoji-wrap wake">☀️</div>
       <div class="card-main">
         <div class="card-title">早起</div>
-        <div class="card-meta">05:30 – 08:00</div>
-        <div class="card-hint">05:30 开始，还有 7 小时 16 分</div>
+        <div class="card-meta">06:00 – 12:00</div>
+        <div class="card-hint open">06:00 开放，还有 7 小时 46 分</div>
       </div>
       <div class="btn is-disabled">未开放</div>
     </div>
@@ -214,12 +219,11 @@ const checkinMarkup = `
 
     <div class="card rules-card">
       <div class="rules-title">爱心怎么来</div>
-      <div class="rule-line"><span>🌙 早睡打卡</span><span class="plus">+1</span></div>
-      <div class="rule-line"><span>☀️ 早起打卡</span><span class="plus">+1</span></div>
-      <div class="rule-line"><span>✨ 当天两项都完成</span><span class="plus">+1</span></div>
-      <div class="rule-line"><span>💞 两人同一天都完成同一项</span><span class="plus">+1</span></div>
-      <div class="rule-line"><span>🔥 连续 7 天 / 30 天全勤</span><span class="plus">+10 / +50</span></div>
-      <div class="rule-note">时间窗口按服务器时间判定；规则改完要同步 + 重新部署云函数</div>
+      <div class="rule-line"><span>🌙 早睡（按打卡时间分档）</span><span class="plus">+2 / +1 / 0</span></div>
+      <div class="rule-line"><span>☀️ 早起</span><span class="plus">09:00 前 +1，之后 0</span></div>
+      <div class="rule-line"><span>🔥 一个月打满 22 天</span><span class="plus">+10</span></div>
+      <div class="rule-line"><span>😴 这一晚没打早睡 / 早起</span><span class="plus">−1</span></div>
+      <div class="rule-note">档位：21:30–22:15 +2，22:15–23:15 +1，23:15 之后 0。规则由服务端下发，改规则要双方同意。</div>
     </div>
 
     <div class="safe-bottom"></div>
