@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/home/home",
-    "pages/history/history",
     "pages/mine/mine",
     "pages/m/checkin/index",
     "pages/m/checkin/rules/index",
@@ -24,10 +23,6 @@
       {
         "pagePath": "pages/home/home",
         "text": "首页"
-      },
-      {
-        "pagePath": "pages/history/history",
-        "text": "记录"
       },
       {
         "pagePath": "pages/mine/mine",

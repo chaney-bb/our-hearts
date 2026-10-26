@@ -269,10 +269,6 @@ Page({
     })
   },
 
-  goHistory: function () {
-    wx.switchTab({ url: '/pages/history/history' })
-  },
-
   retry: function () {
     this.setData({ ready: false, error: '', errorRaw: '' })
     this.load()

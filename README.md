@@ -262,7 +262,6 @@ pending → approved / rejected
 │  ├─ utils/                                  config.js（环境 ID）、clock.js、rules.js（生成物）
 │  └─ pages/
 │     ├─ home/                                首页：外壳 + 两列宫格
-│     ├─ history/                             记录：日历 + 爱心明细
 │     ├─ mine/                                我的：资料 / 对账 / 消息申请 / 解绑
 │     ├─ approvals/                           消息申请（审批）
 │     ├─ register/                            登记 & 修改资料

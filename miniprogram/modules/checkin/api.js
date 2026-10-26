@@ -9,10 +9,6 @@ module.exports = {
     return api.call('checkin.detail')
   },
 
-  history: function (month) {
-    return api.call('checkin.history', { month: month })
-  },
-
   act: function (type) {
     return api.call('checkin.act', { type: type })
   },

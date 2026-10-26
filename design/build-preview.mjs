@@ -56,7 +56,7 @@ const base = `
     margin: 0; padding: 44px 32px 40px;
     background: #EDE3DF;
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    display: flex; align-items: stretch; justify-content: center; gap: 30px;
+    display: flex; align-items: flex-start; justify-content: center; gap: 30px;
   }
   .frame {
     width: 375px; flex: 0 0 375px;
@@ -84,7 +84,7 @@ const base = `
   }
   .tab.active { color: #FF6B81; font-weight: 600; }
   #p-home .body, #p-checkin .page, #p-mine .page { flex: 1; }
-  #p-checkin .page, #p-mine .page { padding-bottom: 8px; }
+  #p-checkin .page, #p-mine .page { padding-bottom: 8px; min-height: 0; }
 `
 
 const homeMarkup = `
@@ -151,7 +151,6 @@ const homeMarkup = `
 
   <div class="tabbar">
     <div class="tab active">首页</div>
-    <div class="tab">记录</div>
     <div class="tab">我的</div>
   </div>
 </div>
@@ -307,7 +306,6 @@ const mineMarkup = `
 
   <div class="tabbar">
     <div class="tab">首页</div>
-    <div class="tab">记录</div>
     <div class="tab active">我的</div>
   </div>
 </div>

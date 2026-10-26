@@ -44,7 +44,7 @@
 
     <view class="section-head">
       <text class="section-title">这一晚的打卡</text>
-      <text class="section-sub" bindtap="goHistory">{{dayLabel}}</text>
+      <text class="section-sub">{{dayLabel}}</text>
     </view>
 
     <view
