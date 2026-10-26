@@ -255,16 +255,6 @@ const checkinMarkup = `
       <div class="cal-note">实心=打满且有爱心 · 半透=打满但有一项 0 分 · 细线=只打了一项 · 空白=没打</div>
     </div>
 
-    <div class="card rules-card">
-      <div class="rules-title">当前规则</div>
-      <div class="rule-line"><span>🌙 早睡</span><span class="plus">21:30–24:00 · +2 / +1 / 0</span></div>
-      <div class="rule-line"><span>☀️ 早起</span><span class="plus">06:00–12:00 · +1 / 0</span></div>
-      <div class="rule-line"><span>🔥 一个月打满 22 天</span><span class="plus">+10</span></div>
-      <div class="rule-line"><span>😴 漏打</span><span class="plus">−1 / −1</span></div>
-      <div class="rule-note">早睡档位：21:30–22:15 +2，22:15–23:15 +1，23:15–24:00 +0；早起档位：06:00–09:00 +1，09:00–12:00 +0</div>
-      <div class="rule-note">点右上角 ⋯ 可以看完整明细或申请修改（要对方同意才生效）。</div>
-    </div>
-
     <div class="safe-bottom"></div>
   </div>
 </div>

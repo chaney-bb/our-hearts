@@ -1,5 +1,5 @@
-var checkinApi = require('../../../modules/checkin/api.js')
-var rules = require('../../../utils/rules.js')
+var checkinApi = require('../../../../modules/checkin/api.js')
+var rules = require('../../../../utils/rules.js')
 
 var HOURS = []
 for (var h = 0; h < 24; h++) HOURS.push(h + ':00')
@@ -18,6 +18,38 @@ function getPath(obj, path) {
   return o
 }
 
+// 只读模式的"规则明细"：把配置翻译成几句人话
+function buildSummary(cfg) {
+  var fmt = function (t) {
+    return (
+      t.window.start + '–' + t.window.end + ' · ' +
+      t.tiers
+        .map(function (x) {
+          return x.hearts > 0 ? '+' + x.hearts : '0'
+        })
+        .join(' / ')
+    )
+  }
+  return [
+    { label: '🌙 早睡', value: fmt(cfg.sleep) },
+    { label: '☀️ 早起', value: fmt(cfg.wake) },
+    { label: '🔥 一个月打满 ' + cfg.monthly.requiredDays + ' 天', value: '+' + cfg.monthly.bonus },
+    { label: '😴 漏打', value: '−' + cfg.sleep.missPenalty + ' / −' + cfg.wake.missPenalty },
+    { label: '📮 申诉截止', value: cfg.sleep.appealDeadline + ' / ' + cfg.wake.appealDeadline }
+  ]
+}
+
+function buildTierNote(cfg) {
+  var part = function (t) {
+    return t.tiers
+      .map(function (x) {
+        return x.from + '–' + x.to + ' +' + x.hearts
+      })
+      .join('，')
+  }
+  return '早睡档位：' + part(cfg.sleep) + '；早起档位：' + part(cfg.wake)
+}
+
 Page({
   data: {
     ready: false,
@@ -25,6 +57,8 @@ Page({
     submitting: false,
     cfg: null,
     hours: HOURS,
+    summaryLines: [],
+    tierNote: '',
     error: '',
     errors: []
   },
@@ -51,9 +85,16 @@ Page({
       self.setData({
         ready: true,
         error: '',
-        cfg: JSON.parse(JSON.stringify(cfg))
+        cfg: JSON.parse(JSON.stringify(cfg)),
+        summaryLines: buildSummary(cfg),
+        tierNote: buildTierNote(cfg)
       })
     })
+  },
+
+  // 只读 → 编辑
+  goEdit: function () {
+    wx.redirectTo({ url: '/pages/m/checkin/rules/index?mode=edit' })
   },
 
   onTime: function (e) {

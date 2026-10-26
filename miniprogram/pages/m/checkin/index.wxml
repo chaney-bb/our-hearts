@@ -91,16 +91,6 @@
       <view class="cal-note">实心=打满且有爱心 · 半透=打满但有一项 0 分 · 细线=只打了一项 · 空白=没打</view>
     </view>
 
-    <view class="card rules-card">
-      <view class="rules-title">当前规则</view>
-      <view class="rule-line" wx:for="{{ruleLines}}" wx:key="label">
-        <text>{{item.label}}</text>
-        <text class="plus">{{item.value}}</text>
-      </view>
-      <view class="rule-note">{{tierNote}}</view>
-      <view class="rule-note">点右上角 ⋯ 可以看完整明细或申请修改（要对方同意才生效）。</view>
-    </view>
-
     <view class="safe-bottom"></view>
   </block>
 

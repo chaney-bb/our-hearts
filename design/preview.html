@@ -613,15 +613,92 @@
 }
 #p-checkin .more{
   margin-left: 8px;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #FFF0F3;
   color: #FF6B81;
-  font-size: 16px;
-  line-height: 25px;
+  font-size: 17px;
+  line-height: 33px;
   text-align: center;
   font-weight: 700;
+}
+#p-checkin .sheet-mask{
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(58, 42, 40, 0.42);
+  z-index: 200;
+}
+#p-checkin .sheet{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  background: #FFF7F3;
+  border-radius: 16px 16px 0 0;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 20px rgba(58, 42, 40, 0.16);
+  animation: sheetUp 0.18s ease-out;
+}
+#p-checkin @keyframes sheetUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sheet-title{
+  text-align: center;
+  font-size: 11px;
+  color: #B9A5A0;
+  padding: 6px 0 9px;
+}
+#p-checkin .sheet-item{
+  display: flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 13px 12px;
+  margin-bottom: 8px;
+}
+#p-checkin .sheet-item:active{
+  background: #FFF0F3;
+}
+#p-checkin .sheet-emoji{
+  font-size: 18px;
+  margin-right: 9px;
+}
+#p-checkin .sheet-main{
+  flex: 1;
+}
+#p-checkin .sheet-name{
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3A2A28;
+}
+#p-checkin .sheet-desc{
+  display: block;
+  font-size: 10.5px;
+  color: #A08B87;
+  margin-top: 2px;
+}
+#p-checkin .sheet-cancel{
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  font-size: 14px;
+  color: #6B5754;
+  background: #FFFFFF;
+  border-radius: 12px;
 }
 #p-checkin .miss-card{
   display: flex;
@@ -1385,16 +1462,6 @@
       </div>
       <div class="cal-grid"><div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell"></div><div class="cal-cell"><div class="cal-day ">1</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">2</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">3</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">4</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv1"></div></div></div><div class="cal-cell"><div class="cal-day ">5</div><div class="bars"><div class="bar me lv2"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">6</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv2"></div></div></div><div class="cal-cell"><div class="cal-day ">7</div><div class="bars"><div class="bar me lv1"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">8</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv1"></div></div></div><div class="cal-cell"><div class="cal-day ">9</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">10</div><div class="bars"><div class="bar me lv2"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">11</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">12</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv2"></div></div></div><div class="cal-cell"><div class="cal-day ">13</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">14</div><div class="bars"><div class="bar me lv1"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">15</div><div class="bars"><div class="bar me lv2"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">16</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv1"></div></div></div><div class="cal-cell"><div class="cal-day ">17</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">18</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv2"></div></div></div><div class="cal-cell"><div class="cal-day ">19</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">20</div><div class="bars"><div class="bar me lv2"></div><div class="bar ta lv1"></div></div></div><div class="cal-cell"><div class="cal-day ">21</div><div class="bars"><div class="bar me lv1"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">22</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">23</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">24</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv2"></div></div></div><div class="cal-cell"><div class="cal-day ">25</div><div class="bars"><div class="bar me lv2"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day is-today">26</div><div class="bars"><div class="bar me lv3"></div><div class="bar ta lv3"></div></div></div><div class="cal-cell"><div class="cal-day ">27</div><div class="bars"><div class="bar me lv0"></div><div class="bar ta lv0"></div></div></div><div class="cal-cell"><div class="cal-day ">28</div><div class="bars"><div class="bar me lv0"></div><div class="bar ta lv0"></div></div></div><div class="cal-cell"><div class="cal-day ">29</div><div class="bars"><div class="bar me lv0"></div><div class="bar ta lv0"></div></div></div><div class="cal-cell"><div class="cal-day ">30</div><div class="bars"><div class="bar me lv0"></div><div class="bar ta lv0"></div></div></div><div class="cal-cell"><div class="cal-day ">31</div><div class="bars"><div class="bar me lv0"></div><div class="bar ta lv0"></div></div></div><div class="cal-cell"></div></div>
       <div class="cal-note">实心=打满且有爱心 · 半透=打满但有一项 0 分 · 细线=只打了一项 · 空白=没打</div>
-    </div>
-
-    <div class="card rules-card">
-      <div class="rules-title">当前规则</div>
-      <div class="rule-line"><span>🌙 早睡</span><span class="plus">21:30–24:00 · +2 / +1 / 0</span></div>
-      <div class="rule-line"><span>☀️ 早起</span><span class="plus">06:00–12:00 · +1 / 0</span></div>
-      <div class="rule-line"><span>🔥 一个月打满 22 天</span><span class="plus">+10</span></div>
-      <div class="rule-line"><span>😴 漏打</span><span class="plus">−1 / −1</span></div>
-      <div class="rule-note">早睡档位：21:30–22:15 +2，22:15–23:15 +1，23:15–24:00 +0；早起档位：06:00–09:00 +1，09:00–12:00 +0</div>
-      <div class="rule-note">点右上角 ⋯ 可以看完整明细或申请修改（要对方同意才生效）。</div>
     </div>
 
     <div class="safe-bottom"></div>

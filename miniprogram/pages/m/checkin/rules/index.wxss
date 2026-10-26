@@ -68,6 +68,12 @@
   padding: 8rpx 16rpx;
 }
 
+.value {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #FF5C77;
+}
+
 .tilde {
   margin: 0 10rpx;
   color: #C9B8B4;
