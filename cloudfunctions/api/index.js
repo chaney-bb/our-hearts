@@ -302,12 +302,34 @@ async function getHistory(openid, month) {
     return days[k].sleep && days[k].wake
   })
 
-  const logsRes = await db
-    .collection(COL.logs)
-    .where({ openid, date: _.gte(start).and(_.lte(end)) })
-    .orderBy('at', 'desc')
-    .limit(50)
-    .get()
+  // 爱心流水单独查，并且容错：这个集合没建也不该让整个记录页挂掉
+  let logs = []
+  let warn = ''
+  try {
+    const logsRes = await db
+      .collection(COL.logs)
+      .where({ openid: openid, date: _.gte(start).and(_.lte(end)) })
+      .limit(200)
+      .get()
+
+    // 不用 orderBy：云开发里 where + orderBy 可能要求建索引，直接在代码里排序更省事
+    logs = logsRes.data
+      .sort(function (a, b) {
+        return (b.at || 0) - (a.at || 0)
+      })
+      .slice(0, 50)
+      .map(function (l) {
+        return { date: l.date, at: l.at, delta: l.delta, reason: l.reason }
+      })
+  } catch (err) {
+    const msg = String((err && (err.errMsg || err.message)) || err)
+    console.error('[history] 读 heart_logs 失败:', msg)
+    if (/collection not exist|not exist|COLLECTION_NOT_EXIST|-502005/i.test(msg)) {
+      warn = '数据库里还没有 heart_logs 集合，所以爱心明细读不出来。去「云开发 → 数据库」建一个，权限选「所有用户不可读写」，然后重新部署云函数'
+    } else {
+      warn = '爱心明细读取失败（日历数据是好的）：' + msg
+    }
+  }
 
   return {
     ok: true,
@@ -315,9 +337,8 @@ async function getHistory(openid, month) {
     month: month,
     days: days,
     stats: { fullCount: fullKeys.length, bestStreak: bestStreakOf(fullKeys) },
-    logs: logsRes.data.map(function (l) {
-      return { date: l.date, at: l.at, delta: l.delta, reason: l.reason }
-    }),
+    logs: logs,
+    warn: warn,
     hearts: couple ? couple.hearts || 0 : 0
   }
 }
@@ -382,6 +403,13 @@ exports.main = async (event) => {
     return { ok: false, code: 'UNKNOWN', message: '未知操作：' + action }
   } catch (err) {
     console.error('[api 出错]', action, err)
-    return { ok: false, code: 'ERROR', message: '服务打了个盹，稍后再试' }
+    // 千万不要把真实原因藏起来：带上 detail，页面才能显示到底哪一行炸了
+    const detail = String((err && (err.errMsg || err.message)) || err)
+    return {
+      ok: false,
+      code: 'ERROR',
+      message: '云函数执行出错（' + action + '）',
+      detail: detail
+    }
   }
 }

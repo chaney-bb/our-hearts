@@ -7,7 +7,12 @@
 
   <view class="body">
 
-    <view class="err-banner" wx:if="{{error}}">{{error}}</view>
+    <view class="err-banner" wx:if="{{error}}">
+      <text class="err-banner-title">{{error}}</text>
+      <text class="err-banner-raw" wx:if="{{errorRaw}}">技术信息：{{errorRaw}}</text>
+    </view>
+
+    <view class="warn-banner" wx:if="{{warn}}">{{warn}}</view>
 
     <!-- 本月概况 -->
     <view class="stat-row">

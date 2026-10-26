@@ -17,7 +17,9 @@ Page({
     stats: { fullCount: 0, bestStreak: 0 },
     hearts: 0,
     logs: [],
-    error: ''
+    error: '',
+    errorRaw: '',
+    warn: ''
   },
 
   onLoad: function () {
@@ -40,7 +42,10 @@ Page({
 
     return api.call('history', { month: month }).then(function (res) {
       if (!res || !res.ok) {
-        self.setData({ error: (res && res.message) || '加载失败，原因不明' })
+        self.setData({
+          error: (res && res.message) || '加载失败，原因不明',
+          errorRaw: (res && (res.detail || res.raw)) || ''
+        })
         return
       }
 
@@ -51,6 +56,8 @@ Page({
       self.setData({
         ready: true,
         error: '',
+        errorRaw: '',
+        warn: res.warn || '',
         mode: res.mode || 'mock',
         month: month,
         monthLabel: arr[0] + ' 年 ' + Number(arr[1]) + ' 月',

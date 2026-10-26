@@ -20,6 +20,7 @@
 }
 
 .err-banner {
+  display: block;
   margin-bottom: 22rpx;
   padding: 22rpx 26rpx;
   border-radius: 22rpx;
@@ -28,6 +29,33 @@
   font-size: 23rpx;
   color: #C25A6E;
   line-height: 1.6;
+}
+
+.err-banner-title {
+  display: block;
+  font-weight: 600;
+}
+
+.err-banner-raw {
+  display: block;
+  margin-top: 10rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 12rpx;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 20rpx;
+  color: #B08A7E;
+  word-break: break-all;
+}
+
+.warn-banner {
+  margin-bottom: 22rpx;
+  padding: 22rpx 26rpx;
+  border-radius: 22rpx;
+  background: #FFF6E8;
+  border: 2rpx solid #FFE0B2;
+  font-size: 22rpx;
+  color: #96754A;
+  line-height: 1.65;
 }
 
 /* 概况 */
