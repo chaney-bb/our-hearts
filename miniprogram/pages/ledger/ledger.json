@@ -1,0 +1,7 @@
+{
+  "usingComponents": {},
+  "navigationStyle": "default",
+  "navigationBarTitleText": "爱心明细",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}

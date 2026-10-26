@@ -1,0 +1,38 @@
+<view class="page">
+
+  <view class="loading" wx:if="{{!ready && !error}}">加载中…</view>
+
+  <view class="err" wx:if="{{error}}">
+    <text>{{error}}</text>
+    <view class="btn-ghost retry" bindtap="retry">重试</view>
+  </view>
+
+  <block wx:if="{{ready}}">
+
+    <view class="balance-card">
+      <view class="bc-main">
+        <text class="bc-num">❤️ {{balance}}</text>
+        <text class="bc-label">当前爱心</text>
+      </view>
+      <view class="bc-count">共 {{total}} 笔变动</view>
+    </view>
+
+    <view class="warn" wx:if="{{warn}}">{{warn}}</view>
+
+    <view class="empty" wx:if="{{!total}}">还没有爱心记录，去打个卡吧</view>
+
+    <view class="card" wx:if="{{total}}">
+      <view class="line" wx:for="{{logs}}" wx:key="id">
+        <view class="line-main">
+          <text class="line-reason">{{item.reason}}</text>
+          <text class="line-time">{{item.date}} {{item.time}}</text>
+        </view>
+        <text class="line-delta {{item.positive ? 'plus' : 'minus'}}">{{item.delta}}</text>
+      </view>
+    </view>
+
+    <view class="note">只列最近 50 笔。爱心是个人财产，对方的流水你看不到，只能看余额。</view>
+
+    <view class="safe-bottom"></view>
+  </block>
+</view>

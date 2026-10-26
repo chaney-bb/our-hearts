@@ -246,6 +246,20 @@ const n2 = await heartsCore.apply(
 ok('同一个 idemKey 只发一次', n1 === 1 && n2 === 0, { n1: n1, n2: n2 })
 
 await asUser(A)
+s = await call('session.ledger')
+ok(
+  'session.ledger 返回余额 + 流水列表',
+  s.ok === true && typeof s.balance === 'number' && Array.isArray(s.logs) && s.logs.length > 0,
+  { balance: s.balance, count: s.logs && s.logs.length }
+)
+ok(
+  '流水里每笔都带 delta 和时间',
+  (s.logs || []).every((l) => typeof l.delta === 'number' && typeof l.at === 'number'),
+  (s.logs || []).slice(0, 2)
+)
+ok('流水里有"解除绑定清零"这类记录', (s.logs || []).some((l) => String(l.reason).indexOf('清零') >= 0))
+
+await asUser(A)
 s = await call('session.verify')
 ok('A 对账通过', s.ok === true && s.ledger === s.wallet, s)
 

@@ -29,9 +29,14 @@ module.exports = {
     return api.call('session.unbind', { confirm: true })
   },
 
-  // 自检：钱包余额 vs 流水之和
+  // 自检：钱包余额 vs 流水之和（暂时没界面上入口，排查时用）
   verify: function () {
     return api.call('session.verify')
+  },
+
+  // 爱心流水明细
+  ledger: function () {
+    return api.call('session.ledger')
   },
 
   // 工单（审批）：待我处理的 + 我发起的

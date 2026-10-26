@@ -1,0 +1,138 @@
+.page {
+  padding: 24rpx 28rpx 0;
+  background: #FFF7F3;
+  min-height: 100vh;
+}
+
+.loading {
+  padding-top: 160rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #C9B8B4;
+}
+
+.err {
+  font-size: 23rpx;
+  color: #C25A6E;
+  background: #FFF1F3;
+  border: 2rpx solid #FFD3DA;
+  border-radius: 18rpx;
+  padding: 18rpx 22rpx;
+  line-height: 1.6;
+}
+
+.err .retry {
+  margin-top: 14rpx;
+  display: inline-flex;
+}
+
+/* 余额卡 */
+.balance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 32rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, #FFA1AE 0%, #FF7189 60%, #FF5C77 100%);
+  color: #FFFFFF;
+  box-shadow: 0 12rpx 34rpx rgba(255, 92, 119, 0.25);
+  margin-bottom: 22rpx;
+}
+
+.bc-main {
+  display: flex;
+  align-items: baseline;
+}
+
+.bc-num {
+  font-size: 46rpx;
+  font-weight: 700;
+}
+
+.bc-label {
+  margin-left: 14rpx;
+  font-size: 23rpx;
+  opacity: 0.9;
+}
+
+.bc-count {
+  font-size: 22rpx;
+  opacity: 0.85;
+}
+
+.warn {
+  margin-bottom: 18rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 18rpx;
+  background: #FFF6E8;
+  border: 2rpx solid #FFE0B2;
+  font-size: 22rpx;
+  color: #96754A;
+  line-height: 1.6;
+}
+
+.empty {
+  padding: 100rpx 0;
+  text-align: center;
+  font-size: 24rpx;
+  color: #B9A5A0;
+}
+
+/* 明细列表 */
+.card {
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  box-shadow: 0 8rpx 26rpx rgba(255, 107, 129, 0.07);
+  padding: 6rpx 28rpx;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid #FDF4F1;
+}
+
+.line:last-child {
+  border-bottom: none;
+}
+
+.line-main {
+  min-width: 0;
+  flex: 1;
+  padding-right: 20rpx;
+}
+
+.line-reason {
+  font-size: 27rpx;
+  color: #3A2A28;
+}
+
+.line-time {
+  display: block;
+  font-size: 21rpx;
+  color: #B9A5A0;
+  margin-top: 6rpx;
+}
+
+.line-delta {
+  font-size: 30rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.line-delta.plus {
+  color: #FF6B81;
+}
+
+.line-delta.minus {
+  color: #6C8CFF;
+}
+
+.note {
+  margin: 22rpx 6rpx 0;
+  font-size: 21rpx;
+  color: #B9A5A0;
+  line-height: 1.65;
+}

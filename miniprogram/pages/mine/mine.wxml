@@ -82,8 +82,8 @@
         <view class="action" bindtap="editProfile">
           <text>修改资料</text><text class="arrow">›</text>
         </view>
-        <view class="action" bindtap="verify">
-          <text>爱心对账</text><text class="arrow">›</text>
+        <view class="action" bindtap="openLedger">
+          <text>爱心明细</text><text class="arrow">›</text>
         </view>
         <view class="action danger" wx:if="{{bound}}" bindtap="onUnbind">
           <text>解除绑定</text><text class="arrow">›</text>

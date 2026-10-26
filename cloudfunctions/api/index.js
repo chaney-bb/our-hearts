@@ -12,6 +12,7 @@ const context = require('./core/context.js')
 const identity = require('./core/identity.js')
 const session = require('./core/session.js')
 const hearts = require('./core/hearts.js')
+const clock = require('./core/clock.js')
 const approvals = require('./core/approvals.js')
 const scheduler = require('./core/scheduler.js')
 const respond = require('./core/respond.js')
@@ -46,7 +47,19 @@ async function runSystem(action, payload, openid) {
     return session.get(openid)
   }
 
-  // 自检：钱包余额 vs 流水之和（只查自己，随手可点）
+  // 爱心流水明细（「我的 → 爱心明细」用；账本是内核的，所以走系统动作）
+  if (action === 'session.ledger') {
+    const profile = await identity.getProfile(openid)
+    const now = Date.now()
+    const today = clock.dateKey(now)
+    const start = clock.shiftKey(today, -365)
+    const end = clock.shiftKey(today, 1)
+    const h = await hearts.history(openid, { start: start, end: end })
+    const balance = await hearts.balanceOf(openid, profile.coupleId)
+    return { balance: balance, logs: h.logs, warn: h.warn }
+  }
+
+  // 自检：钱包余额 vs 流水之和（前端暂时没入口，留着方便排查）
   if (action === 'session.verify') {
     const profile = await identity.getProfile(openid)
     return hearts.verify(openid, profile.coupleId)
@@ -87,6 +100,7 @@ const SYSTEM = {
   'session.bind': 1,
   'session.unbind': 1,
   'session.verify': 1,
+  'session.ledger': 1,
   'approvals.list': 1,
   'approvals.decide': 1
 }

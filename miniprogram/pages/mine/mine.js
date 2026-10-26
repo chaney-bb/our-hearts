@@ -63,6 +63,10 @@ Page({
     wx.navigateTo({ url: '/pages/approvals/approvals' })
   },
 
+  openLedger: function () {
+    wx.navigateTo({ url: '/pages/ledger/ledger' })
+  },
+
   editProfile: function () {
     wx.navigateTo({ url: '/pages/register/register?mode=edit' })
   },
@@ -73,20 +77,6 @@ Page({
 
   copyCode: function () {
     wx.setClipboardData({ data: this.data.inviteCode })
-  },
-
-  verify: function () {
-    session.verify().then(function (r) {
-      if (!r || !r.ok) {
-        wx.showModal({ title: '对账失败', content: (r && r.message) || '请求没成功', showCancel: false })
-        return
-      }
-      wx.showModal({
-        title: r.wallet === r.ledger ? '账是对的 ✅' : '账对不上 ⚠️',
-        content: '钱包余额：' + r.wallet + '\n流水合计：' + r.ledger,
-        showCancel: false
-      })
-    })
   },
 
   onUnbind: function () {

@@ -5,6 +5,7 @@
     "pages/m/checkin/index",
     "pages/m/checkin/rules/index",
     "pages/approvals/approvals",
+    "pages/ledger/ledger",
     "pages/register/register"
   ],
   "window": {

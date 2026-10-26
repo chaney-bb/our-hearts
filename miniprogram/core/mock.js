@@ -355,6 +355,17 @@ function call(action, data) {
     case 'session.verify':
       return Promise.resolve(ok({ wallet: s.wallet.mine, ledger: s.wallet.mine, ok: true }))
 
+    case 'session.ledger':
+      return Promise.resolve(
+        ok({
+          balance: s.wallet.mine,
+          logs: (s.logs || []).slice(0, 50).map(function (l) {
+            return { date: l.date, at: l.at, delta: l.delta, reason: l.reason }
+          }),
+          warn: ''
+        })
+      )
+
     case 'checkin.summary':
       return Promise.resolve(checkinSummary(s))
     case 'checkin.detail':
