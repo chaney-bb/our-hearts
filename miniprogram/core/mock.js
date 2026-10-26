@@ -144,7 +144,7 @@ function sessionUnbind(s, confirm) {
 
 function checkinDetail(s) {
   var ms = now()
-  var todayKey = rules.dateKey(ms)
+  var todayKey = rules.sleepDayKey(ms)
   var records = s.checkins[todayKey] || {}
   var fullDayKeys = fullDayKeysOf(s)
   var recent = []
@@ -178,7 +178,7 @@ function checkinAct(s, type) {
     return biz('CLOSED', '今天已经过了' + w.label + '打卡时间（窗口 ' + w.start + '–' + w.end + '）')
   }
 
-  var todayKey = rules.dateKey(ms)
+  var todayKey = rules.sleepDayKey(ms)
   if (!s.checkins[todayKey]) s.checkins[todayKey] = {}
   if (s.checkins[todayKey][type]) return biz('DUP', '今天已经打过卡啦')
 
@@ -226,7 +226,7 @@ function bestStreakOf(keys) {
 }
 
 function checkinHistory(s, month) {
-  month = month || rules.monthKey(now())
+  month = month || rules.sleepDayKey(now()).slice(0, 7)
   var keys = Object.keys(s.checkins)
   var days = {}
   var fullKeys = []
@@ -258,7 +258,7 @@ function checkinHistory(s, month) {
 
 function checkinSummary(s) {
   var ms = now()
-  var todayKey = rules.dateKey(ms)
+  var todayKey = rules.sleepDayKey(ms)
   var records = s.checkins[todayKey] || {}
   return ok({
     todayDone: (records.sleep ? 1 : 0) + (records.wake ? 1 : 0),

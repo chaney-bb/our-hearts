@@ -216,7 +216,37 @@ console.log('\n[11] 对账：余额 = 流水之和')
 s = await call('session.verify')
 ok('A 对账通过', s.ok === true && s.ledger === s.wallet, s)
 
-console.log('\n[12] 容错与兜底')
+console.log('\n[12] 打卡日：跨零点算同一晚（T30）')
+const D = 'openid_D'
+const E = 'openid_E'
+await register(D, '阿呆')
+let rd = await call('session.get')
+const inviteD = rd.inviteCode
+await register(E, '阿瓜')
+await call('session.bind', { inviteCode: inviteD })
+
+await asUser(D)
+setNow(bj(2026, 10, 30, 22, 30))
+d = await call('checkin.act', { type: 'sleep' })
+ok('10-30 22:30 早睡归属 10-30', d.ok === true && d.detail.today.date === '2026-10-30', d.detail && d.detail.today)
+
+setNow(bj(2026, 10, 31, 6, 40))
+d = await call('checkin.act', { type: 'wake' })
+ok('10-31 06:40 的早起也归属 10-30', d.ok === true && d.detail.today.date === '2026-10-30', d.detail && d.detail.today)
+ok('同一晚两项齐 → 早起1 + 全勤1 = 2', d.reward.delta === 2, d.reward)
+ok('这一晚全勤成立', d.detail.today.fullDay === true)
+ok('连续天数变成 1', d.detail.streak === 1, d.detail.streak)
+
+setNow(bj(2026, 11, 1, 6, 0))
+d = await call('checkin.act', { type: 'wake' })
+ok('11-01 06:00 的早起归属 10-31', d.ok === true && d.detail.today.date === '2026-10-31', d.detail && d.detail.today)
+
+d = await call('checkin.history', { month: '2026-10' })
+ok('10 月日历里有 10-31（跨月归属）', !!(d.days['2026-10-31'] && d.days['2026-10-31'].wake), d.days['2026-10-31'])
+d = await call('checkin.history', { month: '2026-11' })
+ok('11 月日历里没有它', !d.days['2026-10-31'], Object.keys(d.days || {}))
+
+console.log('\n[13] 容错与兜底')
 fake.state.drop('heart_logs')
 silence()
 d = await call('checkin.history', { month: '2026-10' })

@@ -5,6 +5,7 @@ Page({
   data: {
     ready: false,
     streak: 0,
+    dayLabel: '',
     items: [],
     clock: '',
     week: [],
@@ -53,6 +54,7 @@ Page({
       self.setData({
         ready: true,
         streak: d.streak,
+        dayLabel: d.today.date,
         error: '',
         errorRaw: '',
         rulesStale: self.checkStale(d.rules)
@@ -151,7 +153,10 @@ Page({
 
       self.offset = res.serverNow - Date.now()
       self.detail = Object.assign({}, self.detail, res.detail)
-      self.setData({ streak: self.detail.streak })
+      self.setData({
+        streak: self.detail.streak,
+        dayLabel: (self.detail.today && self.detail.today.date) || self.data.dayLabel
+      })
       self.render()
 
       var r = res.reward || { delta: 0, reasons: [] }

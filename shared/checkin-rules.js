@@ -22,6 +22,11 @@ var RULES = {
     wake: { start: '05:30', end: '08:00', label: '早起', emoji: '☀️', tip: '新的一天开始啦' }
   },
 
+  // 打卡日从几点开始算
+  // 中午 12:00 之前的打卡都归到前一天 —— 因为"昨晚早睡 + 今早起床"是同一晚。
+  // 没有这个，早睡（D 日）和早起（D+1 日）永远不在同一个日期上，全勤/连续天数永远不成立。
+  cutoverHour: 12,
+
   // 爱心数值
   hearts: {
     sleep: 1, // 早睡打卡
@@ -35,6 +40,25 @@ var RULES = {
 
   // 顺序就是页面上的顺序
   types: ['sleep', 'wake']
+}
+
+/* ---------------------------------- 打卡日 ---------------------------------- */
+
+/**
+ * 把"真实时间"换算成"打卡日"（YYYY-MM-DD）
+ *
+ *   cutoverHour = 12 时：
+ *     10-26 22:30 早睡  -> 打卡日 10-26
+ *     10-27 06:40 早起  -> 打卡日 10-26   ← 同一天！
+ *     10-27 22:30 早睡  -> 打卡日 10-27
+ *     11-01 06:00 早起  -> 打卡日 10-31   ← 会算进 10 月
+ */
+function sleepDayKey(ms) {
+  var p = clock.parts(ms)
+  var key = clock.dateKey(ms)
+  var cut = RULES.cutoverHour
+  if (typeof cut === 'number' && p.h < cut) return clock.shiftKey(key, -1)
+  return key
 }
 
 /* ---------------------------------- 窗口状态 ---------------------------------- */
@@ -100,13 +124,13 @@ function describeItem(type, records, now) {
   }
 }
 
-// 今日整体状态
+// 今日整体状态（"今日"指的是打卡日，不是自然日）
 function describeToday(records, now) {
   var items = RULES.types.map(function (t) {
     return describeItem(t, records, now)
   })
   return {
-    date: clock.dateKey(now),
+    date: sleepDayKey(now),
     items: items,
     fullDay: !!(records && records.sleep && records.wake)
   }
@@ -157,6 +181,7 @@ function calcStreak(fullDayKeys, todayKeyValue) {
 // 把时间工具一起导出，页面里只需要 require 这一个文件
 module.exports = Object.assign({}, clock, {
   RULES: RULES,
+  sleepDayKey: sleepDayKey,
   windowState: windowState,
   msUntilWindowEnd: msUntilWindowEnd,
   msUntilWindowStart: msUntilWindowStart,

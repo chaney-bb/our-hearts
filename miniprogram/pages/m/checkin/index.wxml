@@ -31,8 +31,8 @@
     </view>
 
     <view class="section-head">
-      <text class="section-title">今天的打卡</text>
-      <text class="section-sub" bindtap="goHistory">看日历 ›</text>
+      <text class="section-title">这一晚的打卡</text>
+      <text class="section-sub" bindtap="goHistory">{{dayLabel}} · 看日历 ›</text>
     </view>
 
     <view

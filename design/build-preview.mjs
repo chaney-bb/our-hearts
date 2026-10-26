@@ -172,8 +172,8 @@ const checkinMarkup = `
     </div>
 
     <div class="section-head">
-      <span class="section-title">今天的打卡</span>
-      <span class="section-sub">看日历 ›</span>
+      <span class="section-title">这一晚的打卡</span>
+      <span class="section-sub">2026-10-26 · 看日历 ›</span>
     </div>
 
     <div class="check-card is-done">

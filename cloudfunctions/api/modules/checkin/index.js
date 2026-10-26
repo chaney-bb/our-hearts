@@ -5,8 +5,13 @@
  *   key / name / emoji / collections / defaults / actions / on
  *
  * 模块只通过 ctx 用内核，不 require 任何别的模块。
- * 业务逻辑（时间窗口、奖励计算）沿用原来的实现，一行没改，
- * 只是从云函数入口搬到了这里。
+ *
+ * ⚠️ 关于"日期"：这里所有 date 都不是自然日，而是**打卡日**（rules.sleepDayKey）。
+ *    中午 12 点之前的打卡算前一天，因为"昨晚早睡 + 今早起床"是同一晚。
+ *    没有这个，早睡（D 日）和早起（D+1 日）永远不在同一个日期上，
+ *    全勤 / 连续天数 / 里程碑奖励全都触发不了。
+ *
+ * 时间窗口的判定仍然用真实时间（ctx.now），因为那是"现在能不能打卡"。
  */
 const clock = require('../../core/clock.js')
 const rules = require('./rules.js')
@@ -18,37 +23,45 @@ const LOOKBACK_DAYS = 60
 
 /* ------------------------------ 内部工具 ------------------------------ */
 
+/** 当前的打卡日 */
+function dayKeyOf(ctx) {
+  return rules.sleepDayKey(ctx.now)
+}
+
 async function todayRecords(ctx) {
-  return store.getRecords(ctx, ctx.dateKey)
+  return store.getRecords(ctx, dayKeyOf(ctx))
+}
+
+async function fullDayKeys(ctx) {
+  return store.getFullDayKeys(ctx, dayKeyOf(ctx), LOOKBACK_DAYS)
 }
 
 async function recentDays(ctx) {
-  const fullDayKeys = await store.getFullDayKeys(ctx, ctx.dateKey, LOOKBACK_DAYS)
+  const dayKey = dayKeyOf(ctx)
+  const keys = await fullDayKeys(ctx)
   const recent = []
   for (let i = 6; i >= 0; i--) {
-    const k = clock.shiftKey(ctx.dateKey, -i)
-    recent.push({ date: k, fullDay: fullDayKeys.indexOf(k) >= 0 })
+    const k = clock.shiftKey(dayKey, -i)
+    recent.push({ date: k, fullDay: keys.indexOf(k) >= 0 })
   }
-  return { fullDayKeys: fullDayKeys, recent: recent }
+  return { fullDayKeys: keys, recent: recent }
 }
 
-/* ------------------------------ 三个动作 ------------------------------ */
+/* ------------------------------ 四个动作 ------------------------------ */
 
 /**
- * 给外壳（首页宫格 / 总览）用：只返回几个数字，不返回整页数据
+ * 给外壳（首页宫格）用：只返回几个数字 + 一句摘要
  */
 async function summary(ctx) {
   const records = await todayRecords(ctx)
-  const fullDayKeys = await store.getFullDayKeys(ctx, ctx.dateKey, LOOKBACK_DAYS)
-
+  const keys = await fullDayKeys(ctx)
   const done = (records.sleep ? 1 : 0) + (records.wake ? 1 : 0)
-  const streak = rules.calcStreak(fullDayKeys, ctx.dateKey)
+  const streak = rules.calcStreak(keys, dayKeyOf(ctx))
 
   return {
     todayDone: done,
     todayTotal: rules.RULES.types.length,
     streak: streak,
-    // 外壳宫格直接显示这一行（模块自己决定怎么概括，外壳不用懂业务）
     sub: '今日 ' + done + '/' + rules.RULES.types.length + ' · 连续 ' + streak + ' 天'
   }
 }
@@ -62,9 +75,9 @@ async function detail(ctx) {
   const r = await recentDays(ctx)
 
   return {
-    streak: rules.calcStreak(r.fullDayKeys, ctx.dateKey),
+    streak: rules.calcStreak(r.fullDayKeys, dayKeyOf(ctx)),
     today: {
-      date: ctx.dateKey,
+      date: dayKeyOf(ctx),
       records: records,
       fullDay: !!(records.sleep && records.wake)
     },
@@ -82,7 +95,7 @@ async function act(ctx, payload) {
   const w = rules.RULES.windows[type]
   if (!w) return respond.biz('BAD_TYPE', '没有这个打卡项')
 
-  // 关键：用 ctx.now（服务器时间），不用客户端时间
+  // 关键：用 ctx.now（服务器时间）判断窗口，不用客户端时间
   const state = rules.windowState(type, ctx.now)
   if (state === 'upcoming') {
     return respond.biz(
@@ -97,23 +110,25 @@ async function act(ctx, payload) {
     )
   }
 
-  if (await store.countType(ctx, ctx.openid, ctx.dateKey, type)) {
-    return respond.biz('DUP', '今天已经打过卡啦')
+  const dayKey = dayKeyOf(ctx)
+
+  if (await store.countType(ctx, ctx.openid, dayKey, type)) {
+    return respond.biz('DUP', '这一晚已经打过' + w.label + '卡啦')
   }
 
-  await store.add(ctx, ctx.dateKey, type)
+  await store.add(ctx, dayKey, type)
 
   const records = await todayRecords(ctx)
   const isFullDay = !!(records.sleep && records.wake)
 
-  // 对方今天完成同一项了吗（同步奖）
+  // 对方这一晚完成同一项了吗（同步奖）
   let partnerDone = false
   if (ctx.partner) {
-    partnerDone = (await store.countType(ctx, ctx.partner.openid, ctx.dateKey, type)) > 0
+    partnerDone = (await store.countType(ctx, ctx.partner.openid, dayKey, type)) > 0
   }
 
-  const fullDayKeys = await store.getFullDayKeys(ctx, ctx.dateKey, LOOKBACK_DAYS)
-  const streakAfter = rules.calcStreak(fullDayKeys, ctx.dateKey)
+  const keys = await fullDayKeys(ctx)
+  const streakAfter = rules.calcStreak(keys, dayKey)
 
   const awards = rules.checkinAwards({
     type: type,
@@ -138,9 +153,10 @@ async function act(ctx, payload) {
 
 /**
  * 记录页：日历 + 统计 + 爱心明细
+ * 月份也按打卡日归属：11-01 早上 6 点的早起，会出现在 10 月的日历里
  */
 async function history(ctx, payload) {
-  const month = payload.month || clock.monthKey(ctx.now)
+  const month = payload.month || dayKeyOf(ctx).slice(0, 7)
   const days = await store.getMonth(ctx, month)
 
   const fullKeys = Object.keys(days).filter(function (k) {
@@ -184,6 +200,7 @@ module.exports = {
 
   // 规则默认值（P3 之后用户可以在设置页覆盖）
   defaults: {
+    cutoverHour: rules.RULES.cutoverHour,
     windows: rules.RULES.windows,
     hearts: rules.RULES.hearts
   },

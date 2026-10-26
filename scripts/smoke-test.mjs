@@ -77,6 +77,13 @@ ok('06:30 早起可以打卡', rules.windowState('wake', Date.now()) === 'open')
 setNow(bj(2026, 10, 27, 8, 30))
 ok('08:30 早起窗口关闭', rules.windowState('wake', Date.now()) === 'expired')
 
+console.log('\n[1b] 打卡日：中午 12 点前的打卡算前一天（跨零点算同一晚）')
+ok('22:30 算当天', rules.sleepDayKey(bj(2026, 10, 26, 22, 30)) === '2026-10-26')
+ok('次日 06:40 算前一天', rules.sleepDayKey(bj(2026, 10, 27, 6, 40)) === '2026-10-26')
+ok('11:59 还算前一天', rules.sleepDayKey(bj(2026, 10, 27, 11, 59)) === '2026-10-26')
+ok('12:00 起算当天', rules.sleepDayKey(bj(2026, 10, 27, 12, 0)) === '2026-10-27')
+ok('跨月：11-01 06:00 算 10-31', rules.sleepDayKey(bj(2026, 11, 1, 6, 0)) === '2026-10-31')
+
 console.log('\n[2] 连续天数')
 ok(
   '今天全勤 -> 从今天往回数',
@@ -120,16 +127,18 @@ ok('22:05 打早起卡被拦住', r3.ok === false && r3.code === 'CLOSED', r3)
 
 setNow(bj(2026, 10, 27, 6, 20))
 const r4 = await mock.call('checkin.act', { type: 'wake' })
-ok('第二天 06:20 早起成功 +1', r4.ok === true && r4.reward.delta === 1, r4)
-ok('爱心变成 2', (await wallet()) === 2, await wallet())
+ok('次日 06:20 早起，归到昨晚 → 早起 1 + 全勤 1', r4.ok === true && r4.reward.delta === 2, r4.reward)
+ok('打卡日是 10-26（不是 10-27）', r4.detail.today.date === '2026-10-26', r4.detail.today.date)
+ok('两项都完成', r4.detail.today.fullDay === true)
+ok('爱心变成 3', (await wallet()) === 3, await wallet())
 
 setNow(bj(2026, 10, 27, 22, 30))
 const r5 = await mock.call('checkin.act', { type: 'sleep' })
-ok('当晚 22:30 早睡 + 全勤奖 = 2', r5.ok === true && r5.reward.delta === 2, r5.reward)
+ok('当晚 22:30 早睡归到 10-27，只拿 +1', r5.ok === true && r5.reward.delta === 1, r5.reward)
 
 const home = await mock.call('checkin.detail', {})
-ok('首页连续天数 = 1', home.streak === 1, home.streak)
-ok('今天两项都完成', home.today.fullDay === true)
+ok('连续天数 = 1', home.streak === 1, home.streak)
+ok('今晚只完成了早睡（还没全勤）', home.today.fullDay === false)
 
 const history = await mock.call('checkin.history', { month: '2026-10' })
 ok('10 月记录里有 10-26 和 10-27', !!history.days['2026-10-26'] && !!history.days['2026-10-27'])

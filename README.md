@@ -105,17 +105,23 @@
 `miniprogram/utils/rules.js` 和 `cloudfunctions/api/modules/checkin/rules.js` 都是它生成的副本，**别手改**。
 
 ```js
+cutoverHour: 12,                            // 打卡日从中午 12 点切分（见下）
 windows: {
   sleep: { start: '5:00',  end: '23:59' },  // 早睡窗口（你上次改的）
   wake:  { start: '05:30', end: '08:00' }   // 早起窗口
 },
 hearts: {
   sleep: 1, wake: 1,        // 单项打卡
-  fullDay: 1,               // 当天两项都完成
+  fullDay: 1,               // 当晚两项都完成
   sync: 1,                  // 两人同一天完成同一项
   streak7: 10, streak30: 50 // 连续里程碑
 }
 ```
+
+> **`cutoverHour` 是什么**：打卡用的是"打卡日"而不是自然日。
+> 中午 12:00 之前打的卡归到前一天 —— 因为 22:30 早睡和次日 06:40 早起是**同一晚**。
+> 没有它，两项永远不在同一个日期上，全勤和连续天数就永远不成立（这是 T30 修掉的 bug）。
+> 你们要是习惯凌晨 2 点睡，把这个值改成比如 `4` 或 `5` 就行。
 
 改完规则有**三步，少一步都不生效**：
 
