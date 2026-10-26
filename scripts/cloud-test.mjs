@@ -272,6 +272,32 @@ ok('10 月日历里有 10-31', !!(d.days['2026-10-31'] && d.days['2026-10-31'].w
 d = await call('checkin.history', { month: '2026-11' })
 ok('11 月日历里没有它', !d.days['2026-10-31'], Object.keys(d.days || {}))
 
+console.log('\n[13b] 自定义规则：往 core_settings 写一条，立即生效')
+const cidDE = coupleIdOf(D)
+await fake.db.collection('core_settings').add({
+  data: {
+    coupleId: cidDE,
+    module: 'checkin',
+    patch: { sleep: { tiers: [{ from: '21:30', to: '24:00', hearts: 9 }] } }
+  }
+})
+
+await asUser(D)
+d = await call('checkin.detail')
+ok(
+  '自定义档位被合并进 config',
+  d.config.sleep.tiers.length === 1 && d.config.sleep.tiers[0].hearts === 9,
+  d.config.sleep.tiers
+)
+ok('没覆盖的字段沿用默认值', d.config.wake.tiers[0].hearts === 1, d.config.wake.tiers)
+
+setNow(bj(2026, 11, 1, 22, 0))
+d = await call('checkin.act', { type: 'sleep' })
+ok('按自定义规则发分（+9 而不是 +2）', d.ok === true && d.reward.delta === 9, d.reward)
+
+d = await call('checkin.history', { month: '2026-11' })
+ok('记录页也用新规则', d.ok === true)
+
 console.log('\n[14] 容错与兜底')
 fake.state.drop('heart_logs')
 silence()
