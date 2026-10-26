@@ -1,0 +1,112 @@
+.page {
+  padding: 24rpx 28rpx 0;
+  background: #FFF7F3;
+  min-height: 100vh;
+}
+
+.loading {
+  padding-top: 160rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #C9B8B4;
+}
+
+.err {
+  font-size: 23rpx;
+  color: #C25A6E;
+  background: #FFF1F3;
+  border: 2rpx solid #FFD3DA;
+  border-radius: 18rpx;
+  padding: 18rpx 22rpx;
+}
+
+.section-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #6B5754;
+  padding: 26rpx 6rpx 16rpx;
+}
+
+.empty {
+  font-size: 23rpx;
+  color: #B9A5A0;
+  padding: 20rpx 6rpx 10rpx;
+}
+
+.card {
+  background: #FFFFFF;
+  border-radius: 26rpx;
+  box-shadow: 0 8rpx 26rpx rgba(255, 107, 129, 0.07);
+  padding: 26rpx;
+  margin-bottom: 18rpx;
+}
+
+.t-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.t-title {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.t-time {
+  font-size: 21rpx;
+  color: #B9A5A0;
+}
+
+.t-summary {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #6B5754;
+  line-height: 1.6;
+  background: #FBF3F1;
+  border-radius: 14rpx;
+  padding: 14rpx 18rpx;
+}
+
+.t-status {
+  font-size: 21rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: #F4EDEA;
+  color: #A08B87;
+}
+
+.t-status.approved {
+  background: #EAF7F2;
+  color: #2FAE8B;
+}
+
+.t-status.rejected {
+  background: #FFF1F3;
+  color: #C25A6E;
+}
+
+.t-actions {
+  display: flex;
+  margin-top: 20rpx;
+}
+
+.t-btn {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  font-size: 27rpx;
+  font-weight: 600;
+}
+
+.t-btn.reject {
+  background: #F7EFED;
+  color: #8A7370;
+  margin-right: 16rpx;
+}
+
+.t-btn.approve {
+  background: linear-gradient(135deg, #FF8FA3, #FF6B81);
+  color: #FFFFFF;
+}

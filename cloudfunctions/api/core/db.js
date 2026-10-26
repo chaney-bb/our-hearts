@@ -17,7 +17,8 @@ const COL = {
   couples: 'couples', // 内核：一段关系（pending / active / dissolved）
   wallets: 'core_wallets', // 内核：个人爱心钱包（_id = openid）
   hearts: 'heart_logs', // 内核：爱心流水
-  settings: 'core_settings', // 内核：各模块的规则覆盖（P3 才用）
+  settings: 'core_settings', // 内核：各模块的规则覆盖
+  approvals: 'core_approvals', // 内核：工单（打卡申诉 / 改规则 / 消费申请…）
   checkins: 'checkins' // 打卡模块：打卡记录（模块自己声明）
 }
 

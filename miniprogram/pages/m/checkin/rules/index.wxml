@@ -1,0 +1,165 @@
+<view class="page">
+  <view class="loading" wx:if="{{!ready && !error}}">加载中…</view>
+  <view class="err" wx:if="{{error}}">{{error}}</view>
+
+  <block wx:if="{{ready && cfg}}">
+    <view class="tip" wx:if="{{!editable}}">这是当前生效的规则。想改就点底部按钮（要 TA 同意）。</view>
+    <view class="tip" wx:if="{{editable}}">改完提交给 TA 审批，TA 同意后从那一刻起生效；之前的打卡结果不受影响。</view>
+
+    <!-- 早睡 -->
+    <view class="card">
+      <view class="card-title">🌙 早睡</view>
+
+      <view class="row">
+        <text class="label">窗口</text>
+        <view class="row-main">
+          <picker mode="time" value="{{cfg.sleep.window.start}}" data-path="sleep.window.start" bindchange="onTime" disabled="{{!editable}}">
+            <text class="time">{{cfg.sleep.window.start}}</text>
+          </picker>
+          <text class="tilde">–</text>
+          <picker mode="time" value="{{cfg.sleep.window.end}}" data-path="sleep.window.end" bindchange="onTime" disabled="{{!editable}}">
+            <text class="time">{{cfg.sleep.window.end}}</text>
+          </picker>
+        </view>
+      </view>
+
+      <view class="row" wx:for="{{cfg.sleep.tiers}}" wx:key="from" wx:for-item="tier" wx:for-index="i">
+        <text class="label">第 {{i + 1}} 档</text>
+        <view class="row-main">
+          <text class="time">{{tier.from}}</text>
+          <text class="tilde">–</text>
+          <picker
+            wx:if="{{i < cfg.sleep.tiers.length - 1}}"
+            mode="time"
+            value="{{tier.to}}"
+            data-type="sleep"
+            data-idx="{{i}}"
+            bindchange="onTierTo"
+            disabled="{{!editable}}"
+          >
+            <text class="time">{{tier.to}}</text>
+          </picker>
+          <text class="time" wx:else>{{tier.to}}</text>
+          <text class="tilde">=</text>
+          <input class="num" type="number" value="{{tier.hearts}}" data-path="sleep.tiers.{{i}}.hearts" bindinput="onNumber" disabled="{{!editable}}" />
+          <text class="unit">爱心</text>
+        </view>
+      </view>
+
+      <view class="row">
+        <text class="label">漏打扣</text>
+        <view class="row-main">
+          <input class="num" type="number" value="{{cfg.sleep.missPenalty}}" data-path="sleep.missPenalty" bindinput="onNumber" disabled="{{!editable}}" />
+          <text class="unit">爱心（扣到 0 为止）</text>
+        </view>
+      </view>
+
+      <view class="row">
+        <text class="label">申诉截止</text>
+        <view class="row-main">
+          <picker mode="time" value="{{cfg.sleep.appealDeadline}}" data-path="sleep.appealDeadline" bindchange="onTime" disabled="{{!editable}}">
+            <text class="time">{{cfg.sleep.appealDeadline}}</text>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <!-- 早起 -->
+    <view class="card">
+      <view class="card-title">☀️ 早起</view>
+
+      <view class="row">
+        <text class="label">窗口</text>
+        <view class="row-main">
+          <picker mode="time" value="{{cfg.wake.window.start}}" data-path="wake.window.start" bindchange="onTime" disabled="{{!editable}}">
+            <text class="time">{{cfg.wake.window.start}}</text>
+          </picker>
+          <text class="tilde">–</text>
+          <picker mode="time" value="{{cfg.wake.window.end}}" data-path="wake.window.end" bindchange="onTime" disabled="{{!editable}}">
+            <text class="time">{{cfg.wake.window.end}}</text>
+          </picker>
+        </view>
+      </view>
+
+      <view class="row" wx:for="{{cfg.wake.tiers}}" wx:key="from" wx:for-item="tier" wx:for-index="i">
+        <text class="label">第 {{i + 1}} 档</text>
+        <view class="row-main">
+          <text class="time">{{tier.from}}</text>
+          <text class="tilde">–</text>
+          <picker
+            wx:if="{{i < cfg.wake.tiers.length - 1}}"
+            mode="time"
+            value="{{tier.to}}"
+            data-type="wake"
+            data-idx="{{i}}"
+            bindchange="onTierTo"
+            disabled="{{!editable}}"
+          >
+            <text class="time">{{tier.to}}</text>
+          </picker>
+          <text class="time" wx:else>{{tier.to}}</text>
+          <text class="tilde">=</text>
+          <input class="num" type="number" value="{{tier.hearts}}" data-path="wake.tiers.{{i}}.hearts" bindinput="onNumber" disabled="{{!editable}}" />
+          <text class="unit">爱心</text>
+        </view>
+      </view>
+
+      <view class="row">
+        <text class="label">漏打扣</text>
+        <view class="row-main">
+          <input class="num" type="number" value="{{cfg.wake.missPenalty}}" data-path="wake.missPenalty" bindinput="onNumber" disabled="{{!editable}}" />
+          <text class="unit">爱心</text>
+        </view>
+      </view>
+
+      <view class="row">
+        <text class="label">申诉截止</text>
+        <view class="row-main">
+          <picker mode="time" value="{{cfg.wake.appealDeadline}}" data-path="wake.appealDeadline" bindchange="onTime" disabled="{{!editable}}">
+            <text class="time">{{cfg.wake.appealDeadline}}</text>
+          </picker>
+        </view>
+      </view>
+    </view>
+
+    <!-- 月度 -->
+    <view class="card">
+      <view class="card-title">🔥 月度全勤</view>
+      <view class="row">
+        <text class="label">达标天数</text>
+        <view class="row-main">
+          <input class="num" type="number" value="{{cfg.monthly.requiredDays}}" data-path="monthly.requiredDays" bindinput="onNumber" disabled="{{!editable}}" />
+          <text class="unit">天（含）</text>
+        </view>
+      </view>
+      <view class="row">
+        <text class="label">奖励</text>
+        <view class="row-main">
+          <input class="num" type="number" value="{{cfg.monthly.bonus}}" data-path="monthly.bonus" bindinput="onNumber" disabled="{{!editable}}" />
+          <text class="unit">爱心</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 高级 -->
+    <view class="card">
+      <view class="card-title">⚙️ 高级</view>
+      <view class="row">
+        <text class="label">打卡日切分</text>
+        <view class="row-main">
+          <picker range="{{hours}}" value="{{cfg.cutoverHour}}" bindchange="onCutover" disabled="{{!editable}}">
+            <text class="time">{{cfg.cutoverHour}}:00</text>
+          </picker>
+        </view>
+      </view>
+      <view class="note">打卡日切分点必须落在"没有打卡活动"的时间段（默认 12:00，即早起结束后、早睡开始前）。填错会让日期归错。</view>
+    </view>
+
+    <view class="err-list" wx:if="{{errors.length}}">
+      <view class="err-item" wx:for="{{errors}}" wx:key="index">· {{item.message}}</view>
+    </view>
+
+    <view class="btn submit" wx:if="{{editable}}" bindtap="submit">{{submitting ? '提交中…' : '提交给 TA 审批'}}</view>
+    <view class="safe-bottom"></view>
+  </block>
+</view>

@@ -24,9 +24,12 @@ function fail(code, message, detail) {
 /**
  * 业务失败（不算异常）：模块里直接 return respond.biz('DUP', '今天已经打过卡啦')
  * 路由层看到 ok === false 就原样返回给前端
+ * extra 会作为 errors 一起返回（比如规则校验的详细报错列表）
  */
-function biz(code, message) {
-  return { ok: false, code: code || 'BIZ', message: message || '操作没成功' }
+function biz(code, message, extra) {
+  const res = { ok: false, code: code || 'BIZ', message: message || '操作没成功' }
+  if (extra) res.errors = extra
+  return res
 }
 
 module.exports = { ok: ok, fail: fail, biz: biz }

@@ -12,7 +12,10 @@ const context = require('./core/context.js')
 const identity = require('./core/identity.js')
 const session = require('./core/session.js')
 const hearts = require('./core/hearts.js')
+const approvals = require('./core/approvals.js')
+const scheduler = require('./core/scheduler.js')
 const respond = require('./core/respond.js')
+const { bizError } = require('./core/errors.js')
 
 // 旧版客户端用的接口名（重构前是 home / checkin / history / joinCouple）
 const LEGACY = { home: 1, checkin: 1, history: 1, joinCouple: 1 }
@@ -49,6 +52,31 @@ async function runSystem(action, payload, openid) {
     return hearts.verify(openid, profile.coupleId)
   }
 
+  // ---------- 工单（审批） ----------
+  if (action === 'approvals.list') {
+    const profile = await identity.getProfile(openid)
+    const empty = { toMe: [], mine: [] }
+    if (!profile.coupleId) return empty
+    return approvals.list(openid, profile.coupleId)
+  }
+
+  if (action === 'approvals.decide') {
+    const profile = await identity.getProfile(openid)
+    if (!profile.coupleId) throw bizError('NOT_PAIRED', '先和 TA 配对')
+    const r = await approvals.decide(
+      openid,
+      profile.coupleId,
+      payload.id,
+      payload.approve === true,
+      registry
+    )
+    return {
+      ticket: r.ticket,
+      applied: r.applied,
+      list: await approvals.list(openid, profile.coupleId)
+    }
+  }
+
   return null
 }
 
@@ -58,7 +86,9 @@ const SYSTEM = {
   'session.updateProfile': 1,
   'session.bind': 1,
   'session.unbind': 1,
-  'session.verify': 1
+  'session.verify': 1,
+  'approvals.list': 1,
+  'approvals.decide': 1
 }
 
 /* ------------------------------ 入口 ------------------------------ */
@@ -82,6 +112,14 @@ exports.main = async (event) => {
   }
 
   try {
+    // ---------- 定时结算（只有定时触发器 / 测试可以触发）----------
+    if (action === 'settle.run') {
+      const isTimer =
+        (event && (event.Type === 'Timer' || event.type === 'timer')) || payload.force === true
+      if (!isTimer) return respond.fail('FORBIDDEN', '结算只能由定时触发器调用')
+      return respond.ok(await scheduler.runAll(Date.now()))
+    }
+
     // ---------- 系统动作 ----------
     if (SYSTEM[action]) {
       const data = await runSystem(action, payload, openid)

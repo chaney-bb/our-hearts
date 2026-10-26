@@ -153,6 +153,52 @@ function monthDays(s, month) {
   return days
 }
 
+/** 日历：本地模式只有"我"的数据，TA 那一行是空的 */
+function calendarOf(s, month, cfg) {
+  var days = {}
+  for (var k in s.checkins) {
+    if (k.indexOf(month) !== 0) continue
+    var r = s.checkins[k] || {}
+    days[k] = {
+      me: {
+        sleep: r.sleep ? (typeof r.sleep.hearts === 'number' ? r.sleep.hearts : 0) : null,
+        wake: r.wake ? (typeof r.wake.hearts === 'number' ? r.wake.hearts : 0) : null
+      },
+      partner: { sleep: null, wake: null }
+    }
+  }
+  return days
+}
+
+/** 最近几天漏打的（本地模式同样会提示，方便看 UI） */
+function missesOf(s, cfg) {
+  var ms = now()
+  var today = rules.sleepDayKey(ms, cfg)
+  var since = s.couple && s.couple.pairedAt ? rules.sleepDayKey(s.couple.pairedAt, cfg) : ''
+  var out = []
+  for (var i = 0; i <= 3; i++) {
+    var d = rules.shiftKey(today, -i)
+    if (since && d < since) continue
+    for (var j = 0; j < rules.TYPES.length; j++) {
+      var t = rules.TYPES[j]
+      var c = cfg[t]
+      if (!c.missPenalty) continue
+      if (!rules.windowClosed(d, t, cfg, ms)) continue
+      var r = s.checkins[d] || {}
+      if (r[t]) continue
+      out.push({
+        dayKey: d,
+        type: t,
+        label: rules.LABELS[t].label,
+        emoji: rules.LABELS[t].emoji,
+        penalty: c.missPenalty,
+        appealable: !!c.allowAppeal && ms <= rules.appealDeadlineMs(d, t, cfg)
+      })
+    }
+  }
+  return out
+}
+
 function checkinDetail(s) {
   var cfg = cfgOf(s)
   var ms = now()
@@ -179,6 +225,8 @@ function checkinDetail(s) {
       requiredDays: cfg.monthly.requiredDays,
       reached: rules.monthlyReached(fullCount, cfg)
     },
+    calendar: { month: month, days: calendarOf(s, month, cfg) },
+    misses: missesOf(s, cfg),
     config: cfg
   })
 }
@@ -315,6 +363,16 @@ function call(action, data) {
       return Promise.resolve(checkinAct(s, data.type))
     case 'checkin.history':
       return Promise.resolve(checkinHistory(s, data.month))
+
+    case 'checkin.appeal':
+    case 'checkin.proposeConfig':
+      return Promise.resolve(biz('MOCK', '本地预览模式没有对方可以审批，配好云开发再用'))
+
+    case 'approvals.list':
+      return Promise.resolve(ok({ toMe: [], mine: [] }))
+
+    case 'approvals.decide':
+      return Promise.resolve(biz('MOCK', '本地预览模式不能处理审批'))
 
     case 'devReset':
       save(seed())

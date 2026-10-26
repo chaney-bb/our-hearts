@@ -16,7 +16,6 @@
 
   <block wx:if="{{ready}}">
 
-    <!-- 连续天数 + 本月进度 -->
     <view class="stat-strip">
       <view class="ss-main">
         <text class="ss-num">🔥 {{streak}}</text>
@@ -29,11 +28,23 @@
       <text class="ms-label">本月全勤</text>
       <text class="ms-val">{{monthText}}</text>
       <text class="ms-tag" wx:if="{{monthReached}}">已达标 🎉</text>
+      <view class="more" bindtap="openMenu">⋯</view>
+    </view>
+
+    <!-- 缺卡提示 + 申诉入口 -->
+    <view class="miss-card" wx:for="{{misses}}" wx:key="dayKey" wx:for-item="m">
+      <view class="miss-main">
+        <text class="miss-title">{{m.emoji}} {{m.label}}漏打 · {{m.dayKey}}</text>
+        <text class="miss-sub">已扣 {{m.penalty}} 爱心</text>
+      </view>
+      <view class="miss-btn {{m.appealable ? '' : 'is-off'}}" data-day="{{m.dayKey}}" data-type="{{m.type}}" bindtap="onAppeal">
+        {{m.appealable ? '说明一下' : '申诉已过期'}}
+      </view>
     </view>
 
     <view class="section-head">
       <text class="section-title">这一晚的打卡</text>
-      <text class="section-sub" bindtap="goHistory">{{dayLabel}} · 看日历 ›</text>
+      <text class="section-sub" bindtap="goHistory">{{dayLabel}}</text>
     </view>
 
     <view
@@ -44,27 +55,41 @@
       data-type="{{item.key}}"
     >
       <view class="emoji-wrap {{item.key}}">{{item.emoji}}</view>
-
       <view class="card-main">
         <view class="card-title">{{item.label}}</view>
         <view class="card-meta">{{item.window}}</view>
         <view class="card-hint {{item.state}}">{{item.hint}}</view>
       </view>
-
       <view class="btn {{item.done ? 'is-done' : (item.canCheck ? '' : 'is-disabled')}}">{{item.done ? '已完成' : (item.canCheck ? '打卡' : '未开放')}}</view>
     </view>
 
-    <view class="card week-card">
-      <view class="week-head">
-        <text class="week-title">最近 7 天</text>
-        <text class="tip">满勤 {{weekFull}} 天</text>
-      </view>
-      <view class="week-dots">
-        <view class="week-dot {{item.fullDay ? 'on' : ''}}" wx:for="{{week}}" wx:key="date">
-          <view class="dot-mark">{{item.fullDay ? '❤️' : '·'}}</view>
-          <view class="dot-day">{{item.dayLabel}}</view>
+    <!-- 当月日历：一行一个人（粉=我，蓝=TA） -->
+    <view class="card cal-card">
+      <view class="cal-head">
+        <text class="cal-title">{{monthLabel}}</text>
+        <view class="cal-legend">
+          <view class="lg"><view class="bar me lv3"></view><text>我</text></view>
+          <view class="lg"><view class="bar ta lv3"></view><text>TA</text></view>
         </view>
       </view>
+
+      <view class="cal-week">
+        <view class="cal-week-cell" wx:for="{{weekdays}}" wx:key="*this">{{item}}</view>
+      </view>
+
+      <view class="cal-grid">
+        <view class="cal-cell" wx:for="{{cells}}" wx:key="id">
+          <block wx:if="{{!item.blank}}">
+            <view class="cal-day {{item.isToday ? 'is-today' : ''}}">{{item.day}}</view>
+            <view class="bars">
+              <view class="bar me lv{{item.meLevel}}"></view>
+              <view class="bar ta lv{{item.taLevel}}"></view>
+            </view>
+          </block>
+        </view>
+      </view>
+
+      <view class="cal-note">实心=打满且有爱心 · 半透=打满但有一项 0 分 · 细线=只打了一项 · 空白=没打</view>
     </view>
 
     <view class="card rules-card">
@@ -72,8 +97,8 @@
       <view class="rule-line"><text>🌙 早睡（按打卡时间分档）</text><text class="plus">+2 / +1 / 0</text></view>
       <view class="rule-line"><text>☀️ 早起</text><text class="plus">09:00 前 +1，之后 0</text></view>
       <view class="rule-line"><text>🔥 一个月打满 22 天</text><text class="plus">+10</text></view>
-      <view class="rule-line"><text>😴 这一晚没打早睡 / 早起</text><text class="plus">−1</text></view>
-      <view class="rule-note">档位：21:30–22:15 +2，22:15–23:15 +1，23:15 之后 0。规则由服务端下发，改规则要双方同意。</view>
+      <view class="rule-line"><text>😴 漏打早睡 / 早起</text><text class="plus">−1（可申诉）</text></view>
+      <view class="rule-note">规则由服务端下发；点右上角 ⋯ 可以看明细或申请修改（要对方同意才生效）。</view>
     </view>
 
     <view class="safe-bottom"></view>

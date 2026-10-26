@@ -210,6 +210,24 @@
   line-height: 1;
 }
 
+.action-right {
+  display: flex;
+  align-items: center;
+}
+
+.badge {
+  min-width: 34rpx;
+  height: 34rpx;
+  line-height: 34rpx;
+  text-align: center;
+  padding: 0 10rpx;
+  border-radius: 999rpx;
+  background: #FF5C77;
+  color: #FFFFFF;
+  font-size: 20rpx;
+  margin-right: 12rpx;
+}
+
 .foot {
   margin-top: 28rpx;
   text-align: center;

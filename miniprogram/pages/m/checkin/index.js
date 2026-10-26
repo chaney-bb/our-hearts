@@ -1,18 +1,33 @@
 var checkinApi = require('../../../modules/checkin/api.js')
 var rules = require('../../../utils/rules.js')
 
+function pad2(n) {
+  return n < 10 ? '0' + n : '' + n
+}
+
+// 每天的标记等级：0 没打卡 / 1 只打了半套 / 2 打满但有一项 0 分 / 3 打满且都得分
+function levelOf(slot) {
+  if (!slot) return 0
+  const has = (v) => v !== null && v !== undefined
+  const done = (has(slot.sleep) ? 1 : 0) + (has(slot.wake) ? 1 : 0)
+  if (!done) return 0
+  if (done < 2) return 1
+  return (slot.sleep || 0) + (slot.wake || 0) > 0 ? 3 : 2
+}
+
 Page({
   data: {
     ready: false,
     streak: 0,
     dayLabel: '',
+    monthLabel: '',
     monthText: '',
     monthReached: false,
+    weekdays: ['一', '二', '三', '四', '五', '六', '日'],
+    cells: [],
+    misses: [],
     items: [],
     clock: '',
-    week: [],
-    weekFull: 0,
-    todayFull: false,
     float: '',
     floatSub: '',
     error: '',
@@ -52,14 +67,20 @@ Page({
 
       self.offset = (d.serverNow || Date.now()) - Date.now()
       self.detail = d
-      // 规则完全由服务端下发，前端不再持有任何数值
       self.cfg = d.config || rules.DEFAULTS
+
+      var month = (d.calendar && d.calendar.month) || (d.today.date || '').slice(0, 7)
+      var cells = self.buildCells(month, (d.calendar && d.calendar.days) || {}, d.today.date)
+
       self.setData({
         ready: true,
         streak: d.streak,
         dayLabel: d.today.date,
+        monthLabel: month.replace('-', ' 年 ') + ' 月',
         monthText: d.month ? d.month.fullCount + ' / ' + d.month.requiredDays : '',
         monthReached: !!(d.month && d.month.reached),
+        misses: d.misses || [],
+        cells: cells,
         error: '',
         errorRaw: ''
       })
@@ -68,9 +89,33 @@ Page({
     })
   },
 
-  retry: function () {
-    this.setData({ ready: false, error: '', errorRaw: '' })
-    this.load()
+  buildCells: function (month, days, todayKey) {
+    var arr = String(month).split('-')
+    var y = Number(arr[0])
+    var m = Number(arr[1])
+    var total = new Date(Date.UTC(y, m, 0)).getUTCDate()
+    var firstDow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay()
+    var lead = (firstDow + 6) % 7
+    var cells = []
+    var i, d, key, row
+
+    for (i = 0; i < lead; i++) cells.push({ blank: true, id: 'lead-' + i })
+
+    for (d = 1; d <= total; d++) {
+      key = y + '-' + pad2(m) + '-' + pad2(d)
+      row = days[key] || null
+      cells.push({
+        blank: false,
+        id: key,
+        day: d,
+        meLevel: row ? levelOf(row.me) : 0,
+        taLevel: row ? levelOf(row.partner) : 0,
+        isToday: key === todayKey
+      })
+    }
+
+    while (cells.length % 7 !== 0) cells.push({ blank: true, id: 'tail-' + cells.length })
+    return cells
   },
 
   render: function () {
@@ -81,18 +126,9 @@ Page({
     var cfg = this.cfg || rules.DEFAULTS
     var today = rules.describeToday(d.today.records, now, cfg)
 
-    var week = (d.recent || []).map(function (r) {
-      return { date: r.date, fullDay: r.fullDay, dayLabel: r.date.slice(5).replace('-', '/') }
-    })
-    var weekFull = 0
-    for (var i = 0; i < week.length; i++) if (week[i].fullDay) weekFull++
-
     this.setData({
       items: today.items,
-      clock: rules.timeKey(now),
-      week: week,
-      weekFull: weekFull,
-      todayFull: today.fullDay
+      clock: rules.timeKey(now)
     })
   },
 
@@ -121,12 +157,12 @@ Page({
     if (!item) return
 
     if (item.done) {
-      wx.showToast({ title: '今天已经打过卡啦', icon: 'none' })
+      wx.showToast({ title: '这一晚已经打过啦', icon: 'none' })
       return
     }
     if (!item.canCheck) {
       wx.showToast({
-        title: item.state === 'expired' ? '今天已经过了打卡时间' : '还没到打卡时间哦',
+        title: item.state === 'expired' ? '这一晚的打卡已经结束了' : '还没到打卡时间',
         icon: 'none'
       })
       return
@@ -141,28 +177,25 @@ Page({
         return
       }
 
-      self.offset = res.serverNow - Date.now()
-      self.detail = Object.assign({}, self.detail, res.detail)
-      if (res.detail && res.detail.config) self.cfg = res.detail.config
-      self.setData({
-        streak: self.detail.streak,
-        dayLabel: (self.detail.today && self.detail.today.date) || self.data.dayLabel,
-        monthText: self.detail.month ? self.detail.month.fullCount + ' / ' + self.detail.month.requiredDays : self.data.monthText,
-        monthReached: !!(self.detail.month && self.detail.month.reached)
-      })
-      self.render()
-
       var r = res.reward || { delta: 0, reasons: [] }
       self.showFloat(r.delta, r.reasons)
       try {
         wx.vibrateShort({ type: 'light' })
       } catch (err) {}
+
+      // 打卡会改变日历、连续天数、缺卡列表，直接重拉最稳
+      self.load()
     })
   },
 
   showFloat: function (delta, reasons) {
     var self = this
-    if (!delta) return
+    if (!delta) {
+      if (reasons && reasons.length) {
+        wx.showToast({ title: reasons[0], icon: 'none' })
+      }
+      return
+    }
     this.setData({ float: '+' + delta, floatSub: (reasons || []).join(' · ') })
     clearTimeout(this.floatTimer)
     this.floatTimer = setTimeout(function () {
@@ -170,7 +203,56 @@ Page({
     }, 1800)
   },
 
+  // 右上角 ⋯ 菜单
+  openMenu: function () {
+    var self = this
+    wx.showActionSheet({
+      itemList: ['查看打卡规则明细', '修改打卡规则'],
+      success: function (res) {
+        if (res.tapIndex === 0) {
+          wx.navigateTo({ url: '/pages/m/checkin/rules/index' })
+        } else if (res.tapIndex === 1) {
+          wx.navigateTo({ url: '/pages/m/checkin/rules/index?mode=edit' })
+        }
+      }
+    })
+  },
+
+  // 缺卡申诉
+  onAppeal: function (e) {
+    var self = this
+    var dayKey = e.currentTarget.dataset.day
+    var type = e.currentTarget.dataset.type
+
+    wx.showModal({
+      title: '说明一下',
+      editable: true,
+      placeholderText: '比如：那天加班到两点',
+      success: function (res) {
+        if (!res.confirm) return
+        var reason = String(res.content || '').trim()
+        if (reason.length < 2) {
+          wx.showToast({ title: '写一句说明吧', icon: 'none' })
+          return
+        }
+        checkinApi.appeal(dayKey, type, reason).then(function (r) {
+          if (!r || !r.ok) {
+            wx.showToast({ title: (r && r.message) || '提交失败', icon: 'none' })
+            return
+          }
+          wx.showToast({ title: '已发给 TA，等 TA 处理', icon: 'none' })
+          self.load()
+        })
+      }
+    })
+  },
+
   goHistory: function () {
     wx.switchTab({ url: '/pages/history/history' })
+  },
+
+  retry: function () {
+    this.setData({ ready: false, error: '', errorRaw: '' })
+    this.load()
   }
 })

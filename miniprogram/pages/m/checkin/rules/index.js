@@ -1,0 +1,126 @@
+var checkinApi = require('../../../modules/checkin/api.js')
+var rules = require('../../../utils/rules.js')
+
+var HOURS = []
+for (var h = 0; h < 24; h++) HOURS.push(h + ':00')
+
+function setPath(obj, path, value) {
+  var parts = String(path).split('.')
+  var o = obj
+  for (var i = 0; i < parts.length - 1; i++) o = o[parts[i]]
+  o[parts[parts.length - 1]] = value
+}
+
+function getPath(obj, path) {
+  var parts = String(path).split('.')
+  var o = obj
+  for (var i = 0; i < parts.length; i++) o = o[parts[i]]
+  return o
+}
+
+Page({
+  data: {
+    ready: false,
+    editable: false,
+    submitting: false,
+    cfg: null,
+    hours: HOURS,
+    error: '',
+    errors: []
+  },
+
+  onLoad: function (options) {
+    this.setData({ editable: !!(options && options.mode === 'edit') })
+  },
+
+  onShow: function () {
+    this.load()
+  },
+
+  load: function () {
+    var self = this
+    return checkinApi.detail().then(function (d) {
+      if (!d || !d.ok) {
+        self.setData({ ready: false, error: (d && d.message) || '加载失败' })
+        return
+      }
+      self.setData({
+        ready: true,
+        error: '',
+        cfg: JSON.parse(JSON.stringify(d.config || rules.DEFAULTS))
+      })
+    })
+  },
+
+  onTime: function (e) {
+    var path = e.currentTarget.dataset.path
+    var cfg = this.data.cfg
+    setPath(cfg, path, e.detail.value)
+
+    // 保持"档位首尾对齐窗口"
+    if (path === 'sleep.window.start' || path === 'wake.window.start') {
+      var type = path.split('.')[0]
+      cfg[type].tiers[0].from = e.detail.value
+    }
+    if (path === 'sleep.window.end' || path === 'wake.window.end') {
+      var t2 = path.split('.')[0]
+      cfg[t2].tiers[cfg[t2].tiers.length - 1].to = e.detail.value
+    }
+    this.setData({ cfg: cfg })
+  },
+
+  onNumber: function (e) {
+    var path = e.currentTarget.dataset.path
+    var cfg = this.data.cfg
+    var v = parseInt(e.detail.value, 10)
+    setPath(cfg, path, isNaN(v) ? 0 : v)
+    this.setData({ cfg: cfg })
+  },
+
+  // 改某一档的结束时间时，下一档的开始跟着走
+  onTierTo: function (e) {
+    var cfg = this.data.cfg
+    var type = e.currentTarget.dataset.type
+    var idx = Number(e.currentTarget.dataset.idx)
+    var val = e.detail.value
+
+    cfg[type].tiers[idx].to = val
+    if (cfg[type].tiers[idx + 1]) cfg[type].tiers[idx + 1].from = val
+
+    this.setData({ cfg: cfg })
+  },
+
+  onCutover: function (e) {
+    var cfg = this.data.cfg
+    cfg.cutoverHour = Number(e.detail.value)
+    this.setData({ cfg: cfg })
+  },
+
+  submit: function () {
+    var self = this
+    if (this.data.submitting) return
+
+    var check = rules.validateConfig(this.data.cfg)
+    if (!check.ok) {
+      this.setData({ errors: check.errors, error: check.errors[0].message })
+      return
+    }
+
+    this.setData({ submitting: true, error: '', errors: [] })
+    checkinApi.proposeConfig(this.data.cfg).then(function (r) {
+      self.setData({ submitting: false })
+      if (!r || !r.ok) {
+        self.setData({ error: (r && r.message) || '提交失败', errors: (r && r.errors) || [] })
+        return
+      }
+      wx.showModal({
+        title: '已发送给 TA',
+        content: 'TA 同意之后才会生效。生效前还是按现在的规则走。',
+        showCancel: false,
+        success: function () {
+          wx.navigateBack({ fail: function () {} })
+        }
+      })
+    })
+  }
+})

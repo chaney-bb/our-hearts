@@ -32,5 +32,14 @@ module.exports = {
   // 自检：钱包余额 vs 流水之和
   verify: function () {
     return api.call('session.verify')
+  },
+
+  // 工单（审批）：待我处理的 + 我发起的
+  listApprovals: function () {
+    return api.call('approvals.list')
+  },
+
+  decideApproval: function (id, approve) {
+    return api.call('approvals.decide', { id: id, approve: !!approve })
   }
 }

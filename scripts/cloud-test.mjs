@@ -142,8 +142,12 @@ await asUser(A)
 setNow(bj(2026, 10, 27, 23, 20))
 d = await call('checkin.act', { type: 'sleep' })
 ok('23:20 打卡 → 0 爱心', d.ok === true && d.reward.delta === 0, d.reward)
-ok('余额还是 2', (await walletOf(A)) === 2)
+ok('0 分档不加分，但 10-26 早起漏打被扣 1 → 2-1=1', (await walletOf(A)) === 1, await walletOf(A))
 ok('记录里写着 0 分', fake.state.all('checkins').find((x) => x.openid === A && x.date === '2026-10-27').hearts === 0)
+ok(
+  '漏打扣了流水（reason 里带"漏打"）',
+  fake.state.all('heart_logs').some((l) => String(l.reason).indexOf('漏打') >= 0)
+)
 
 console.log('\n[7] 记录页')
 d = await call('checkin.history', { month: '2026-10' })
@@ -298,7 +302,99 @@ ok('按自定义规则发分（+9 而不是 +2）', d.ok === true && d.reward.de
 d = await call('checkin.history', { month: '2026-11' })
 ok('记录页也用新规则', d.ok === true)
 
-console.log('\n[14] 容错与兜底')
+console.log('\n[14] 缺卡扣分：惰性结算 + 幂等')
+await asUser(D)
+const balD1 = await walletOf(D)
+
+const denied = await call('settle.run', {})
+ok('非定时器调用结算被拒', denied.ok === false && denied.code === 'FORBIDDEN', denied)
+
+d = await call('settle.run', { force: true })
+ok('强制结算能跑通', d.ok === true, d)
+
+const balD2 = await walletOf(D)
+ok('重复结算不会重复扣分', balD1 === balD2, { before: balD1, after: balD2 })
+
+const timerCall = await api.main({ action: 'settle.run', Type: 'Timer' })
+ok('模拟定时触发器也能跑', timerCall.ok === true, timerCall)
+
+console.log('\n[15] 缺卡申诉：工单 → 对方同意 → 退回爱心')
+// 申诉要赶在截止时间前：10-31 早睡的截止是 11-01 12:00
+setNow(bj(2026, 11, 1, 8, 0))
+await asUser(D)
+const balBeforeAppeal = await walletOf(D)
+
+let ap = await call('checkin.appeal', { dayKey: '2026-11-01', type: 'sleep', reason: '还没到截止' })
+ok('窗口还没关时不能申诉', ap.ok === false && ap.code === 'NOT_CLOSED', ap)
+
+ap = await call('checkin.appeal', { dayKey: '2026-10-31', type: 'sleep', reason: '那天加班到两点' })
+ok('申诉工单创建成功', ap.ok === true && !!ap.ticketId, ap)
+
+ap = await call('checkin.appeal', { dayKey: '2026-10-31', type: 'sleep', reason: '再提一次' })
+ok('同一件事不能重复提交', ap.ok === false && ap.code === 'TICKET_EXISTS', ap)
+
+let list = await call('approvals.list')
+ok('发起方能看到自己发起的工单', list.mine.length >= 1, list.mine.length)
+
+await asUser(E)
+list = await call('approvals.list')
+ok('对方能看到"待我处理"', list.toMe.length >= 1, list.toMe.length)
+
+const appealTk = list.toMe.find((t) => t.type === 'late_night')
+ok('工单类型是晚睡说明', !!appealTk, list.toMe.map((t) => t.type))
+
+let dec = null
+if (appealTk) {
+  dec = await call('approvals.decide', { id: appealTk.id, approve: true })
+  ok('同意成功', dec.ok === true && dec.ticket.status === 'approved', dec)
+
+  dec = await call('approvals.decide', { id: appealTk.id, approve: true })
+  ok('同一张工单不能重复处理', dec.ok === false && dec.code === 'ALREADY_DECIDED', dec)
+
+  await asUser(D)
+  ok(
+    '申诉通过后爱心退回 1',
+    (await walletOf(D)) === balBeforeAppeal + 1,
+    { before: balBeforeAppeal, after: await walletOf(D) }
+  )
+}
+
+await asUser(E)
+dec = await call('approvals.decide', { id: 'not-exist-id', approve: true })
+ok('不存在的工单被拒', dec.ok === false && dec.code === 'NOT_FOUND', dec)
+
+console.log('\n[16] 改规则：申请 → 校验 → 对方同意 → 生效')
+await asUser(D)
+const newCfg = JSON.parse(JSON.stringify(rules.DEFAULTS))
+newCfg.sleep.tiers = [{ from: '21:30', to: '24:00', hearts: 4 }]
+
+let pr = await call('checkin.proposeConfig', { config: newCfg })
+ok('规则修改申请创建成功', pr.ok === true && !!pr.ticketId, pr)
+ok('摘要里写了改了什么', typeof pr.summary === 'string' && pr.summary.length > 0, pr.summary)
+
+const badCfg = JSON.parse(JSON.stringify(rules.DEFAULTS))
+badCfg.sleep.tiers = [{ from: '21:30', to: '23:00', hearts: 99 }]
+pr = await call('checkin.proposeConfig', { config: badCfg })
+ok('非法规则被校验拦住（档位没覆盖到窗口结束）', pr.ok === false && pr.code === 'INVALID', pr)
+
+const badCut = JSON.parse(JSON.stringify(rules.DEFAULTS))
+badCut.cutoverHour = 22
+pr = await call('checkin.proposeConfig', { config: badCut })
+ok('cutoverHour 落在打卡时段里被拦住', pr.ok === false && pr.code === 'INVALID', pr.message)
+
+await asUser(E)
+list = await call('approvals.list')
+const ruleTk = list.toMe.find((t) => t.type === 'rules_change')
+ok('对方看到改规则工单', !!ruleTk, list.toMe.map((t) => t.type))
+
+dec = await call('approvals.decide', { id: ruleTk.id, approve: true })
+ok('同意改规则', dec.ok === true, dec)
+
+await asUser(D)
+d = await call('checkin.detail')
+ok('新规则生效（早睡档位 +4）', d.config.sleep.tiers[0].hearts === 4, d.config.sleep.tiers)
+
+console.log('\n[17] 容错与兜底')
 fake.state.drop('heart_logs')
 silence()
 d = await call('checkin.history', { month: '2026-10' })

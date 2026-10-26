@@ -15,6 +15,7 @@ Page({
     daysTogether: 1,
     labels: { realName: '姓名', phone: '手机号', birthday: '生日', gender: '性别', bio: '自我介绍' },
     genderText: '',
+    pendingCount: 0,
     error: ''
   },
 
@@ -48,7 +49,18 @@ Page({
         daysTogether: s.daysTogether,
         genderText: GENDER_TEXT[s.me && s.me.gender] || '未填'
       })
+
+      // 顺手拿一下待我处理的申请数量（没有就不显示小红点）
+      if (s.bound) {
+        session.listApprovals().then(function (r) {
+          if (r && r.ok) self.setData({ pendingCount: (r.toMe || []).length })
+        })
+      }
     })
+  },
+
+  openApprovals: function () {
+    wx.navigateTo({ url: '/pages/approvals/approvals' })
   },
 
   editProfile: function () {

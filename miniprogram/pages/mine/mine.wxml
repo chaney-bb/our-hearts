@@ -72,6 +72,13 @@
 
       <!-- 操作 -->
       <view class="actions">
+        <view class="action" bindtap="openApprovals">
+          <text>消息申请</text>
+          <view class="action-right">
+            <text class="badge" wx:if="{{pendingCount > 0}}">{{pendingCount}}</text>
+            <text class="arrow">›</text>
+          </view>
+        </view>
         <view class="action" bindtap="editProfile">
           <text>修改资料</text><text class="arrow">›</text>
         </view>

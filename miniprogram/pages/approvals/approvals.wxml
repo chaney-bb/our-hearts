@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="loading" wx:if="{{!ready && !error}}">加载中…</view>
+  <view class="err" wx:if="{{error}}">{{error}}</view>
+
+  <block wx:if="{{ready}}">
+
+    <view class="section-title">待我处理（{{toMe.length}}）</view>
+
+    <view class="empty" wx:if="{{!toMe.length}}">没有待处理的申请</view>
+
+    <view class="card" wx:for="{{toMe}}" wx:key="id">
+      <view class="t-head">
+        <text class="t-title">{{item.title}}</text>
+        <text class="t-time">{{item.timeText}}</text>
+      </view>
+      <view class="t-summary" wx:if="{{item.summary}}">{{item.summary}}</view>
+      <view class="t-actions">
+        <view class="t-btn reject" data-id="{{item.id}}" data-approve="0" bindtap="decide">拒绝</view>
+        <view class="t-btn approve" data-id="{{item.id}}" data-approve="1" bindtap="decide">同意</view>
+      </view>
+    </view>
+
+    <view class="section-title">我发起的（{{mine.length}}）</view>
+
+    <view class="empty" wx:if="{{!mine.length}}">还没发起过申请</view>
+
+    <view class="card" wx:for="{{mine}}" wx:key="id">
+      <view class="t-head">
+        <text class="t-title">{{item.title}}</text>
+        <text class="t-status {{item.status}}">{{item.statusText}}</text>
+      </view>
+      <view class="t-summary" wx:if="{{item.summary}}">{{item.summary}}</view>
+      <view class="t-time">{{item.timeText}}</view>
+    </view>
+
+    <view class="safe-bottom"></view>
+  </block>
+</view>

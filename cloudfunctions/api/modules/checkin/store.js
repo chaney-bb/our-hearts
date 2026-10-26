@@ -89,10 +89,41 @@ async function getMonth(ctx, month) {
   return days
 }
 
+/** 某个月两个人的打卡 -> { '2026-10-26': { me:{sleep,wake}, partner:{sleep,wake} } } */
+async function getMonthBoth(ctx, month, partnerOpenid) {
+  const res = await ctx.db
+    .collection(COLL)
+    .where({ coupleId: ctx.coupleId, date: _.gte(month + '-01').and(_.lte(month + '-31')) })
+    .limit(500)
+    .get()
+
+  const days = {}
+
+  function ensure(date) {
+    if (!days[date]) {
+      days[date] = {
+        me: { sleep: null, wake: null },
+        partner: { sleep: null, wake: null }
+      }
+    }
+    return days[date]
+  }
+
+  res.data.forEach(function (d) {
+    const row = ensure(d.date)
+    const slot = d.openid === ctx.openid ? row.me : d.openid === partnerOpenid ? row.partner : null
+    if (!slot) return
+    slot[d.type] = typeof d.hearts === 'number' ? d.hearts : 0
+  })
+
+  return days
+}
+
 module.exports = {
   getRecords: getRecords,
   countType: countType,
   add: add,
   getFullDayKeys: getFullDayKeys,
-  getMonth: getMonth
+  getMonth: getMonth,
+  getMonthBoth: getMonthBoth
 }

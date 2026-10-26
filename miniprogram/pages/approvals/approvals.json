@@ -1,0 +1,7 @@
+{
+  "usingComponents": {},
+  "navigationStyle": "default",
+  "navigationBarTitleText": "消息申请",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}

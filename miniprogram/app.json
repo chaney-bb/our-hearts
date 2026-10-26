@@ -4,6 +4,8 @@
     "pages/history/history",
     "pages/mine/mine",
     "pages/m/checkin/index",
+    "pages/m/checkin/rules/index",
+    "pages/approvals/approvals",
     "pages/register/register"
   ],
   "window": {
