@@ -11,7 +11,7 @@ src/
    ├─ app-migration-target.png      图 3：迁移到 App 的目标架构
    ├─ preview.png                   三页设计预览（首页 / 打卡 / 我的）
    ├─ app-icon.jpg                  小程序头像（上传到微信公众平台用）
-   └─ trial-qrcode.png              体验版二维码（2026-11-02 前有效）
+   └─ trial-qrcode.png              体验版二维码（2026-11-02 前有效；本机自用，已 gitignore）
 ```
 
 ## 约定
@@ -22,7 +22,7 @@ src/
 | 格式 | 截图/界面用 `png`；照片、头像可用 `jpg`；不要提交超大原图（>2MB 请先压缩） |
 | 来源 | 架构图由 `scripts/make-diagrams.py` 生成，改架构后重跑脚本，不要手工 P 图 |
 | 引用 | 文档里用相对路径引用，例如 `![架构图](../src/images/architecture-overview.png)` |
-| 敏感 | `trial-qrcode.png` 只给体验成员，不要发到公开仓库/群；过期后替换或删除 |
+| 敏感 | `trial-qrcode.png` 只给体验成员，**已加入 `.gitignore`，不入公开仓库**；本地自己留着用，过期后替换 |
 | 归档 | 过期物料移到 `src/images/archive/`，文件名加日期，例如 `trial-qrcode-2026-11-02.png` |
 
 ## 以后 App 阶段的建议结构
